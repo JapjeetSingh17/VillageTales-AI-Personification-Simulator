@@ -1,4 +1,4 @@
-# Real-Time Multi AI Agent Personification Simulator
+# Real-Time Multi-Agent Personification Simulator
 
 A stateful, graph-based conversational intelligence framework designed for non-player characters (NPCs) in interactive role-playing game (RPG) environments. The architecture replaces traditional static dialogue trees with real-time autonomous Large Language Model (LLM) reasoning agents, speech-to-text input processing, text-to-speech multimodal synthesis, and spatial proximity state machines.
 
