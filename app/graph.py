@@ -165,76 +165,92 @@ def stt_and_input_processor(state: MultiNPCState) -> dict:
     user_text = state.get("user_text", "").strip()
 
     if not user_text and user_audio and os.path.exists(user_audio):
-        try:
-            api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
-            if api_key:
-                client = genai.Client(api_key=api_key)
+        transcribed_text = ""
 
-                # Upload audio file
+        # Step 1: Ultra-fast STT via Groq Cloud Whisper (whisper-large-v3-turbo)
+        groq_key = settings.groq_api_key or os.getenv("GROQ_API_KEY")
+        if groq_key:
+            try:
+                from groq import Groq
+                groq_client = Groq(api_key=groq_key)
                 with open(user_audio, "rb") as f:
-                    audio_bytes = f.read()
+                    audio_content = f.read()
+                filename = os.path.basename(user_audio)
+                stt_res = groq_client.audio.transcriptions.create(
+                    file=(filename, audio_content),
+                    model="whisper-large-v3-turbo",
+                )
+                if stt_res and stt_res.text and stt_res.text.strip():
+                    transcribed_text = stt_res.text.strip()
+            except Exception as groq_err:
+                print(f"[Groq Whisper STT Warning] {groq_err}. Falling back to Gemini STT...")
 
-                # Determine MIME type
-                ext = user_audio.rsplit(".", 1)[-1].lower() if "." in user_audio else "webm"
-                mime_map = {
-                    "webm": "audio/webm",
-                    "wav": "audio/wav",
-                    "mp3": "audio/mpeg",
-                    "ogg": "audio/ogg",
-                    "m4a": "audio/mp4",
-                    "mp4": "audio/mp4",
-                }
-                mime_type = mime_map.get(ext, "audio/webm")
+        # Step 2: Fallback to Gemini STT if Groq was empty or unavailable
+        if not transcribed_text.strip():
+            try:
+                api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
+                if api_key:
+                    client = genai.Client(api_key=api_key)
 
-                transcribed_text = ""
+                    with open(user_audio, "rb") as f:
+                        audio_bytes = f.read()
 
-                # Step 1: Try dedicated STT model (gemini-3.5-transcribe)
-                stt_model = settings.gemini_stt_model or "gemini-3.5-transcribe"
-                try:
-                    response = client.models.generate_content(
-                        model=stt_model,
-                        contents=[
-                            types.Content(
-                                parts=[
-                                    types.Part.from_bytes(
-                                        data=audio_bytes,
-                                        mime_type=mime_type,
-                                    ),
+                    ext = user_audio.rsplit(".", 1)[-1].lower() if "." in user_audio else "webm"
+                    mime_map = {
+                        "webm": "audio/webm",
+                        "wav": "audio/wav",
+                        "mp3": "audio/mpeg",
+                        "ogg": "audio/ogg",
+                        "m4a": "audio/mp4",
+                        "mp4": "audio/mp4",
+                    }
+                    mime_type = mime_map.get(ext, "audio/webm")
+
+                    stt_model = settings.gemini_stt_model or "gemini-3.5-transcribe"
+                    try:
+                        response = client.models.generate_content(
+                            model=stt_model,
+                            contents=[
+                                types.Content(
+                                    parts=[
+                                        types.Part.from_bytes(
+                                            data=audio_bytes,
+                                            mime_type=mime_type,
+                                        ),
+                                    ]
+                                )
+                            ],
+                        )
+                        if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                            for part in response.candidates[0].content.parts:
+                                if hasattr(part, "audio_transcription") and part.audio_transcription:
+                                    transcribed_text += getattr(part.audio_transcription, "text", "") or ""
+                                elif hasattr(part, "text") and part.text:
+                                    transcribed_text += part.text or ""
+                        elif response.text:
+                            transcribed_text = response.text
+                    except Exception as stt_err:
+                        print(f"[Gemini STT Warning] {stt_model}: {stt_err}. Falling back to multimodal Flash...")
+
+                    if not transcribed_text.strip():
+                        try:
+                            fallback_model = settings.gemini_model or "gemini-3.6-flash"
+                            fb_response = client.models.generate_content(
+                                model=fallback_model,
+                                contents=[
+                                    types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
+                                    "Transcribe the exact words spoken in this audio. Output only the verbatim transcript with no commentary, quotes, or formatting."
                                 ]
                             )
-                        ],
-                    )
-                    # Extract from audio_transcription attribute or text attribute
-                    if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
-                        for part in response.candidates[0].content.parts:
-                            if hasattr(part, "audio_transcription") and part.audio_transcription:
-                                transcribed_text += getattr(part.audio_transcription, "text", "") or ""
-                            elif hasattr(part, "text") and part.text:
-                                transcribed_text += part.text or ""
-                    elif response.text:
-                        transcribed_text = response.text
-                except Exception as stt_err:
-                    print(f"[Primary STT Warning] {stt_model}: {stt_err}. Falling back to multimodal Flash...")
+                            if fb_response.text and fb_response.text.strip():
+                                transcribed_text = fb_response.text.strip().strip('"\'')
+                        except Exception as fb_err:
+                            print(f"[Fallback Gemini STT Error] {fb_err}")
 
-                # Step 2: Fallback to multimodal Gemini model (gemini-3.6-flash) if STT was empty or errored
-                if not transcribed_text.strip():
-                    try:
-                        fallback_model = settings.gemini_model or "gemini-3.6-flash"
-                        fb_response = client.models.generate_content(
-                            model=fallback_model,
-                            contents=[
-                                types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
-                                "Transcribe the exact words spoken in this audio. Output only the verbatim transcript with no commentary, quotes, or formatting."
-                            ]
-                        )
-                        if fb_response.text and fb_response.text.strip():
-                            transcribed_text = fb_response.text.strip().strip('"\'')
-                    except Exception as fb_err:
-                        print(f"[Fallback STT Error] {fb_err}")
+            except Exception as e:
+                print(f"[Gemini STT General Error] {e}")
 
-                user_text = transcribed_text.strip()
-        except Exception as e:
-            print(f"[Gemini STT General Error] {e}")
+        user_text = transcribed_text.strip()
 
     # Fallback only if both text and audio were completely empty
     if not user_text:
@@ -292,6 +308,7 @@ def npc_reasoning_node(state: MultiNPCState) -> dict:
                 google_api_key=api_key,
                 temperature=0.7,
                 max_output_tokens=300,
+                max_retries=1,
             )
 
             # Build enhanced system prompt with RAG context
@@ -329,7 +346,32 @@ def npc_reasoning_node(state: MultiNPCState) -> dict:
             else:
                 npc_text = str(raw_content).strip()
         except Exception as e:
-            npc_text = f"[{npc_info['name']}]: (Error communicating: {str(e)})"
+            # Fallback to Groq LLM if Gemini hits quota limits or fails
+            groq_key = settings.groq_api_key or os.getenv("GROQ_API_KEY")
+            fallback_success = False
+            if groq_key:
+                try:
+                    from groq import Groq
+                    groq_client = Groq(api_key=groq_key)
+                    chat_history = [{"role": "system", "content": enhanced_prompt}]
+                    for msg in state.get("messages", []):
+                        role = "user" if isinstance(msg, HumanMessage) else "assistant"
+                        chat_history.append({"role": role, "content": str(msg.content)})
+                    groq_res = groq_client.chat.completions.create(
+                        model="openai/gpt-oss-120b",
+                        messages=chat_history,
+                        max_tokens=300,
+                        temperature=0.7,
+                    )
+                    if groq_res and groq_res.choices:
+                        npc_text = groq_res.choices[0].message.content.strip()
+                        fallback_success = True
+                except Exception as groq_llm_err:
+                    print(f"[Groq LLM Fallback Warning] {groq_llm_err}")
+
+            if not fallback_success:
+                print(f"[Dialogue Reasoning Error] {e}")
+                npc_text = f"[{npc_info['name']}]: (Error communicating: {str(e)})"
 
     updated_messages = list(state.get("messages", []))
     updated_messages.append(AIMessage(content=npc_text))
@@ -383,9 +425,9 @@ def mission_tracker_node(state: MultiNPCState) -> dict:
     return {}
 
 
-# ==================== Node: TTS (Gemini Flash TTS with Fallback) ====================
+# ==================== Node: TTS (Groq Cloud TTS with Gemini & Web Speech Fallbacks) ====================
 def tts_node(state: MultiNPCState) -> dict:
-    """Converts NPC response text to speech using Gemini TTS (with model fallback) and returns WAV base64."""
+    """Converts NPC response text to speech using Groq Cloud TTS, Gemini TTS, or browser fallback."""
     npc_text = state.get("npc_text", "")
     npc_id = state.get("npc_id", "sarini")
     npc_info = NPC_ROSTER.get(npc_id, NPC_ROSTER["sarini"])
@@ -395,70 +437,103 @@ def tts_node(state: MultiNPCState) -> dict:
     if npc_text:
         speech_text = clean_text_for_tts(npc_text)
         if speech_text:
-            api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
-            if api_key:
+            # Step 1: Try Groq Cloud TTS (canopylabs/orpheus-v1-english)
+            groq_key = settings.groq_api_key or os.getenv("GROQ_API_KEY")
+            if groq_key:
                 try:
-                    client = genai.Client(api_key=api_key)
-                    voice_name = npc_info.get("voice", "Kore")
+                    from groq import Groq
+                    groq_client = Groq(api_key=groq_key)
+                    # Select voice tailored to character
+                    groq_voice = "alloy"
+                    if npc_id == "sarini":
+                        groq_voice = "shimmer"
+                    elif npc_id == "voss":
+                        groq_voice = "onyx"
+                    elif npc_id == "fenn":
+                        groq_voice = "echo"
+                    elif npc_id == "merowin":
+                        groq_voice = "fable"
 
-                    config = types.GenerateContentConfig(
-                        response_modalities=["AUDIO"],
-                        speech_config=types.SpeechConfig(
-                            voice_config=types.VoiceConfig(
-                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                                    voice_name=voice_name
-                                )
-                            )
-                        ),
+                    speech_res = groq_client.audio.speech.create(
+                        model="canopylabs/orpheus-v1-english",
+                        voice=groq_voice,
+                        input=speech_text,
                     )
-
-                    # Dedicated Gemini TTS model (gemini-3.1-flash-tts-preview)
-                    tts_model = settings.gemini_tts_model or "gemini-3.1-flash-tts-preview"
-                    audio_data = None
-                    try:
-                        response = client.models.generate_content(
-                            model=tts_model,
-                            contents=speech_text,
-                            config=config,
-                        )
-                        if (
-                            response.candidates
-                            and response.candidates[0].content
-                            and response.candidates[0].content.parts
-                        ):
-                            part_data = response.candidates[0].content.parts[0].inline_data.data
-                            if part_data:
-                                audio_data = part_data
-                    except Exception as m_err:
-                        print(f"[Gemini TTS Warning] Model {tts_model} failed or quota exceeded: {m_err}")
-
-                    if audio_data:
-                        # Write WAV file to in-memory buffer
-                        # Gemini TTS returns raw PCM audio at 24kHz, 16-bit, mono
-                        sample_rate = 24000
-                        num_channels = 1
-                        sample_width = 2  # 16-bit
-
-                        wav_buf = io.BytesIO()
-                        with wave.open(wav_buf, "wb") as wav_file:
-                            wav_file.setnchannels(num_channels)
-                            wav_file.setsampwidth(sample_width)
-                            wav_file.setframerate(sample_rate)
-                            wav_file.writeframes(audio_data)
-
-                        wav_bytes = wav_buf.getvalue()
-                        b64_str = base64.b64encode(wav_bytes).decode("utf-8")
+                    audio_content = speech_res.read()
+                    if audio_content:
+                        b64_str = base64.b64encode(audio_content).decode("utf-8")
                         audio_base64 = f"data:audio/wav;base64,{b64_str}"
 
-                        # Also write to local tempfile
                         tmp_dir = tempfile.gettempdir()
                         audio_name = f"npc_speech_{int(time.time() * 1000)}.wav"
                         audio_path = os.path.join(tmp_dir, audio_name)
                         with open(audio_path, "wb") as f:
-                            f.write(wav_bytes)
+                            f.write(audio_content)
+                except Exception as groq_tts_err:
+                    print(f"[Groq TTS Notice] {groq_tts_err}. Trying Gemini TTS fallback...")
 
-                except Exception as e:
-                    print(f"[Gemini TTS General Error] {e}")
+            # Step 2: Fallback to Gemini TTS (gemini-3.1-flash-tts-preview) if Groq is pending terms or errored
+            if not audio_base64:
+                api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
+                if api_key:
+                    try:
+                        client = genai.Client(api_key=api_key)
+                        voice_name = npc_info.get("voice", "Kore")
+
+                        config = types.GenerateContentConfig(
+                            response_modalities=["AUDIO"],
+                            speech_config=types.SpeechConfig(
+                                voice_config=types.VoiceConfig(
+                                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                        voice_name=voice_name
+                                    )
+                                )
+                            ),
+                        )
+
+                        tts_model = settings.gemini_tts_model or "gemini-3.1-flash-tts-preview"
+                        audio_data = None
+                        try:
+                            response = client.models.generate_content(
+                                model=tts_model,
+                                contents=speech_text,
+                                config=config,
+                            )
+                            if (
+                                response.candidates
+                                and response.candidates[0].content
+                                and response.candidates[0].content.parts
+                            ):
+                                part_data = response.candidates[0].content.parts[0].inline_data.data
+                                if part_data:
+                                    audio_data = part_data
+                        except Exception as m_err:
+                            print(f"[Gemini TTS Warning] Model {tts_model} failed or quota exceeded: {m_err}")
+
+                        if audio_data:
+                            sample_rate = 24000
+                            num_channels = 1
+                            sample_width = 2  # 16-bit
+
+                            wav_buf = io.BytesIO()
+                            with wave.open(wav_buf, "wb") as wav_file:
+                                wav_file.setnchannels(num_channels)
+                                wav_file.setsampwidth(sample_width)
+                                wav_file.setframerate(sample_rate)
+                                wav_file.writeframes(audio_data)
+
+                            wav_bytes = wav_buf.getvalue()
+                            b64_str = base64.b64encode(wav_bytes).decode("utf-8")
+                            audio_base64 = f"data:audio/wav;base64,{b64_str}"
+
+                            tmp_dir = tempfile.gettempdir()
+                            audio_name = f"npc_speech_{int(time.time() * 1000)}.wav"
+                            audio_path = os.path.join(tmp_dir, audio_name)
+                            with open(audio_path, "wb") as f:
+                                f.write(wav_bytes)
+
+                    except Exception as e:
+                        print(f"[Gemini TTS General Error] {e}")
 
     return {
         "npc_audio_path": audio_path,

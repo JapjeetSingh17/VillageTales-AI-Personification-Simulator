@@ -13,3 +13,4 @@ pydantic-settings>=2.4.0
 pillow
 chromadb
 langchain-text-splitters
+groq>=1.7.0
