@@ -1,0 +1,48 @@
+﻿The Last Light of Duskendale
+A one-shot for the village of Duskendale
+________________
+
+
+Premise
+Beneath the crossroads well at the heart of Duskendale lies a sealed vault — something old, something that drank the magic out of the village overnight, decades ago. Sir Besrand the Last, the village's one knight, went down alone, sealed it with stone and iron, and forbade anyone from forging a new key.
+He's dead now. And someone just forged a key.
+________________
+
+
+The Villain
+Voss Kestrian — "Lord" of Midnight Manor
+Voss arrived eight months ago with old coin and older manners, bought the abandoned manor on the lake island outright, and has been the perfect neighbor ever since — generous at the Frosty Dragon, polite at the Temple of Kord, free with gossip at the Gilded Fox. Nobody has noticed the tunnel he's been having dug from the manor's cellar, under the lake, toward the sealed well.
+He isn't evil in the way villagers whisper. He believes the vault holds knowledge, not a monster — and he's not entirely wrong. He's just also not entirely right, and he's willing to gamble the whole village to find out which.
+* Method: Funds the dig with smuggled reagents moved through the Black Lotus, using Merowin's peddler wagon as an unwitting courier route.
+* Weakness: Genuinely doesn't want anyone hurt — he can be reasoned with, bribed, or exposed publicly before he can be fought.
+* Escalation if ignored: The tunnel breaches the vault within a few in-game days; whatever Sir Besrand sealed away starts bleeding into the water table, and Sarini's wards start failing village-wide.
+________________
+
+
+The Reward
+* The Emberflint Circlet — a thin iron band pulled from the vault generations ago by the Dusken line, said to let its wearer sense deception (mechanically: advantage on Insight checks, GM's discretion on frequency).
+* 200 gp, raised by the village elders once the threat is confirmed and dealt with.
+* A standing boon from the Temple of Kord — one free favor: a blessing, a introduction to a traveling order, or shelter/healing on request, redeemable once.
+________________
+
+
+NPC Voices
+Short personality + sample lines for each — written for dialogue generation, not just narration.
+Sarini — potion shop owner, Sarini's Potion Shoppe Clipped, precise, doesn't trust easily. Talks in ingredients and half-warnings.
+"Wards don't just fail, dear. Something's eating them. That's a taste I know, and I don't like it in my mouth." "You want a truth potion or you want to actually be told the truth? Different prices."
+Merowin — peddler, wagon on the eastern road Talkative, a little too eager to please, genuinely doesn't know he's being used.
+"Strange fellow paid triple for a 'discreet delivery' to the Manor. Didn't ask what was in the crate. Should I have asked what was in the crate?" "I sell maps, trinkets, and the occasional lie by omission. This week it's mostly maps."
+Voss Kestrian — "Lord" of Midnight Manor Warm, articulate, never quite answers the question he was asked.
+"Sir Besrand sealed a door. I intend to open it politely and ask what's on the other side. Is that so villainous?" "You've mistaken caution for cowardice, friend. I've simply done the math you haven't."
+Brother Adalric — priest at the Temple of Kord Blunt, physical, tests people through action rather than words.
+"Kord doesn't answer prayers. He answers effort. So pick up the hammer and start digging, or get out of my temple." "The elders sent a letter asking for a blessing. I sent back a warning. Nobody's read it yet, have they."
+Fenn — blacksmith, Fang Rock Forge Terse, superstitious about his craft, first to notice something's wrong.
+"Steel doesn't rust in a night. Not good steel. Not my steel. Something under this village is hungry, and it isn't picky." "You want a weapon or you want an excuse? I only forge one of those."
+________________
+
+
+Suggested beats
+1. Hook: Fenn's rusted tools + Sarini's failing wards, discovered same morning at the Frosty Dragon.
+2. Trail: Merowin mentions the "discreet delivery" to the Manor if pressed or bought a drink.
+3. Confrontation: Voss, given the chance, will talk before he fights — the villain beat is persuasion or exposure, not just combat.
+4. Climax: The tunnel, the vault door, and a choice — reseal it Besrand's way, or actually open it and find out what's inside.

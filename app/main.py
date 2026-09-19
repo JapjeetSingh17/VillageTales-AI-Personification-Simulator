@@ -13,5 +13,5 @@ from api.index import app
 
 if __name__ == "__main__":
     import uvicorn
-    print("Launching Brightwood RPG NPC Dialogue Engine (local dev)...")
+    print("Launching Village Tales — AI Personification Simulator (local dev)...")
     uvicorn.run("api.index:app", host="127.0.0.1", port=7860, reload=True)

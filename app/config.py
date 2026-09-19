@@ -5,9 +5,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings(BaseSettings):
-    groq_api_key: str = os.getenv("GROQ_API_KEY", "")
-    groq_model: str = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
+    gemini_tts_model: str = os.getenv("GEMINI_TTS_MODEL", "gemini-3.1-flash-tts-preview")
+    gemini_stt_model: str = os.getenv("GEMINI_STT_MODEL", "gemini-3.5-transcribe")
 
     class Config:
         env_file = ".env"

@@ -1,6 +1,7 @@
 /* ============================================================
-   Brightwood RPG — Client-Side Application Logic
-   Handles state management, API calls, recording, and playback
+   Village Tales — Client-Side Application Logic
+   Multi-Agent AI Personification Simulator
+   Handles state, API calls, recording, avatars, and missions
    ============================================================ */
 
 (function () {
@@ -8,8 +9,9 @@
 
   // ==================== STATE ====================
   const state = {
-    playerPos: [260, 260],
+    playerPos: [1065, 925],
     activeNpc: null,
+    npcRoster: {},
     conversations: {},
     isRecording: false,
     isProcessing: false,
@@ -17,6 +19,7 @@
     audioChunks: [],
     recordingStartTime: null,
     timerInterval: null,
+    missionPollInterval: null,
   };
 
   // ==================== DOM REFS ====================
@@ -32,6 +35,7 @@
       npcName: $("#npc-name"),
       npcTitle: $("#npc-title"),
       npcStatus: $("#npc-status"),
+      npcAvatar: $("#npc-avatar"),
       statusDot: $("#status-dot"),
       chatContainer: $("#chat-container"),
       chatEmpty: $("#chat-empty"),
@@ -46,20 +50,36 @@
       audioPlayer: $("#npc-audio-player"),
       loadingOverlay: $("#loading-overlay"),
       loadingText: $("#loading-text"),
+      missionTracker: $("#mission-tracker"),
     };
   }
 
   // ==================== INITIALIZATION ====================
   document.addEventListener("DOMContentLoaded", () => {
     cacheDom();
+    loadNpcRoster();
     bindMovement();
     bindTeleport();
+    bindMapClick();
     bindSpeechControls();
     bindTextInput();
 
     // Load initial map
     updateMap();
+
+    // Poll mission progress every 30s
+    state.missionPollInterval = setInterval(pollMissions, 30000);
   });
+
+  // ==================== NPC ROSTER ====================
+  async function loadNpcRoster() {
+    try {
+      const res = await fetch("/api/npcs");
+      state.npcRoster = await res.json();
+    } catch (err) {
+      console.error("[Roster Error]", err);
+    }
+  }
 
   // ==================== MAP & MOVEMENT ====================
   async function updateMap() {
@@ -115,6 +135,31 @@
     }
   }
 
+  async function moveToCoords(targetX, targetY) {
+    if (state.isProcessing) return;
+
+    try {
+      const res = await fetch("/api/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target_pos: [targetX, targetY],
+          player_pos: state.playerPos,
+        }),
+      });
+
+      const data = await res.json();
+      state.playerPos = data.player_pos;
+      state.activeNpc = data.active_npc;
+
+      updateMap();
+      updateNpcBanner();
+      loadChatHistory();
+    } catch (err) {
+      console.error("[Move Error]", err);
+    }
+  }
+
   function bindMovement() {
     $$(".btn-move").forEach((btn) => {
       btn.addEventListener("click", () => movePlayer(btn.dataset.dir));
@@ -127,6 +172,16 @@
     });
   }
 
+  function bindMapClick() {
+    if (!els.mapImg) return;
+    els.mapImg.addEventListener("click", (e) => {
+      const rect = els.mapImg.getBoundingClientRect();
+      const clickX = Math.round(((e.clientX - rect.left) / rect.width) * 2400);
+      const clickY = Math.round(((e.clientY - rect.top) / rect.height) * 1750);
+      moveToCoords(clickX, clickY);
+    });
+  }
+
   // ==================== NPC BANNER ====================
   function updateNpcBanner() {
     const npc = state.activeNpc;
@@ -136,22 +191,29 @@
       els.npcBanner.classList.remove("exploring");
       els.statusDot.className = "status-dot online";
       els.npcName.textContent = npc.name;
-      els.npcTitle.textContent = `${npc.title} at ${npc.location}`;
-      els.npcStatus.textContent = "In range — record your voice or type a message";
+      els.npcTitle.textContent = `${npc.title} — ${npc.location}`;
+      els.npcStatus.textContent = "Agent in range — record your voice or type a message";
+
+      // Update avatar
+      if (npc.avatar_url) {
+        els.npcAvatar.src = npc.avatar_url;
+        els.npcAvatar.alt = `${npc.name} avatar`;
+      }
     } else {
       els.npcBanner.classList.remove("active");
       els.npcBanner.classList.add("exploring");
       els.statusDot.className = "status-dot offline";
-      els.npcName.textContent = "Exploring Brightwood";
-      els.npcTitle.textContent = "Move closer to a villager on the map";
-      els.npcStatus.textContent = "No villager in range";
+      els.npcName.textContent = "Exploring Duskendale";
+      els.npcTitle.textContent = "Move closer to an agent on the map";
+      els.npcStatus.textContent = "No agent in range";
+      els.npcAvatar.src = "/static/avatars/sarini.png";
     }
   }
 
   // ==================== CHAT ====================
   function loadChatHistory() {
     if (!state.activeNpc) {
-      els.chatContainer.innerHTML = '<div class="chat-empty" id="chat-empty">Walk near a villager to start a conversation</div>';
+      els.chatContainer.innerHTML = '<div class="chat-empty" id="chat-empty">Walk near an agent to start a conversation</div>';
       return;
     }
 
@@ -173,15 +235,28 @@
       const div = document.createElement("div");
       div.className = `chat-msg ${msg.role === "user" ? "user" : "npc"}`;
 
+      // Add avatar thumbnail for NPC messages
+      if (msg.role !== "user" && state.activeNpc && state.activeNpc.avatar_url) {
+        const avatarImg = document.createElement("img");
+        avatarImg.className = "chat-msg-avatar";
+        avatarImg.src = state.activeNpc.avatar_url;
+        avatarImg.alt = "";
+        div.appendChild(avatarImg);
+      }
+
+      const contentDiv = document.createElement("div");
+      contentDiv.className = "chat-msg-content";
+
       const label = document.createElement("div");
       label.className = "msg-label";
-      label.textContent = msg.role === "user" ? "You" : (state.activeNpc ? state.activeNpc.name : "NPC");
+      label.textContent = msg.role === "user" ? "You" : (state.activeNpc ? state.activeNpc.name : "Agent");
 
       const text = document.createElement("div");
       text.textContent = msg.content;
 
-      div.appendChild(label);
-      div.appendChild(text);
+      contentDiv.appendChild(label);
+      contentDiv.appendChild(text);
+      div.appendChild(contentDiv);
       els.chatContainer.appendChild(div);
     });
 
@@ -203,17 +278,45 @@
     const div = document.createElement("div");
     div.className = `chat-msg ${role === "user" ? "user" : "npc"}`;
 
+    // Add avatar thumbnail for NPC messages
+    if (role !== "user" && state.activeNpc && state.activeNpc.avatar_url) {
+      const avatarImg = document.createElement("img");
+      avatarImg.className = "chat-msg-avatar";
+      avatarImg.src = state.activeNpc.avatar_talk_url || state.activeNpc.avatar_url;
+      avatarImg.alt = "";
+      div.appendChild(avatarImg);
+    }
+
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "chat-msg-content";
+
     const label = document.createElement("div");
     label.className = "msg-label";
-    label.textContent = role === "user" ? "You" : (state.activeNpc ? state.activeNpc.name : "NPC");
+    label.textContent = role === "user" ? "You" : (state.activeNpc ? state.activeNpc.name : "Agent");
 
     const text = document.createElement("div");
     text.textContent = content;
 
-    div.appendChild(label);
-    div.appendChild(text);
+    contentDiv.appendChild(label);
+    contentDiv.appendChild(text);
+    div.appendChild(contentDiv);
     els.chatContainer.appendChild(div);
     els.chatContainer.scrollTop = els.chatContainer.scrollHeight;
+
+    // Show speaking avatar expression when NPC responds
+    if (role !== "user" && state.activeNpc) {
+      els.npcBanner.classList.add("speaking");
+      if (state.activeNpc.avatar_talk_url) {
+        els.npcAvatar.src = state.activeNpc.avatar_talk_url;
+      }
+      // Revert to calm after 3 seconds
+      setTimeout(() => {
+        els.npcBanner.classList.remove("speaking");
+        if (state.activeNpc && state.activeNpc.avatar_url) {
+          els.npcAvatar.src = state.activeNpc.avatar_url;
+        }
+      }, 3000);
+    }
   }
 
   // ==================== SPEECH CONTROLS ====================
@@ -227,7 +330,7 @@
   async function startRecording() {
     if (state.isRecording || state.isProcessing) return;
     if (!state.activeNpc) {
-      alert("Move closer to a villager on the map first!");
+      alert("Move closer to an agent on the map first!");
       return;
     }
 
@@ -290,7 +393,7 @@
 
   async function sendAudioToApi(audioBlob) {
     if (!state.activeNpc) return;
-    showLoading("Processing voice input...");
+    showLoading("Transcribing voice via Gemini STT...");
 
     const npcId = state.activeNpc.id;
     const messages = state.conversations[npcId] || [];
@@ -313,6 +416,9 @@
         els.audioPlayer.src = data.audio_url;
         els.audioPlayer.play().catch(() => {});
       }
+
+      // Poll missions after interaction
+      pollMissions();
     } catch (err) {
       console.error("[Talk Error]", err);
       appendMessage("assistant", "(Connection error — please try again)");
@@ -337,12 +443,12 @@
     if (!text || state.isProcessing) return;
 
     if (!state.activeNpc) {
-      alert("Move closer to a villager on the map first!");
+      alert("Move closer to an agent on the map first!");
       return;
     }
 
     els.textInput.value = "";
-    showLoading("Generating response...");
+    showLoading("Generating agent response via Gemini...");
 
     const npcId = state.activeNpc.id;
     const messages = state.conversations[npcId] || [];
@@ -364,6 +470,9 @@
         els.audioPlayer.src = data.audio_url;
         els.audioPlayer.play().catch(() => {});
       }
+
+      // Poll missions after interaction
+      pollMissions();
     } catch (err) {
       console.error("[Talk Error]", err);
       appendMessage("assistant", "(Connection error — please try again)");
@@ -395,6 +504,29 @@
     els.chatContainer.innerHTML = `<div class="chat-empty">Start talking to ${state.activeNpc.name}</div>`;
     els.audioPlayer.src = "";
     els.audioPlayer.pause();
+  }
+
+  // ==================== MISSION POLLING ====================
+  async function pollMissions() {
+    try {
+      const res = await fetch("/api/missions");
+      const data = await res.json();
+      const missions = data.missions || [];
+
+      if (missions.length > 0) {
+        els.missionTracker.innerHTML = "";
+        missions.forEach((m) => {
+          const item = document.createElement("div");
+          item.className = "mission-item";
+          // Clean up the mission text for display
+          const cleanText = m.replace(/^MISSION BEAT \[.*?\]: /, "");
+          item.textContent = cleanText;
+          els.missionTracker.appendChild(item);
+        });
+      }
+    } catch (err) {
+      // Silently ignore mission poll errors
+    }
   }
 
   // ==================== LOADING ====================

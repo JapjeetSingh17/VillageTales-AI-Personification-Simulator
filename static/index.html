@@ -3,18 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Brightwood RPG NPC Dialogue Engine — Interact with AI-powered villagers using real-time voice and text in an immersive zombie survival world.">
-  <title>Brightwood RPG — NPC Dialogue Engine</title>
+  <meta name="description" content="Village Tales: AI Personification Simulator — A multi-agent agentic AI system set in the village of Duskendale. Converse with autonomous AI persona agents using voice and text.">
+  <title>Village Tales — AI Personification Simulator</title>
   <link rel="stylesheet" href="/static/styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
 </head>
 <body>
 
   <!-- App Header -->
   <header class="app-header">
-    <h1>Brightwood NPC Dialogue Engine</h1>
-    <p>Explore the village, approach villagers, and speak with AI-powered NPCs using voice or text</p>
+    <div class="header-content">
+      <div class="header-left">
+        <h1>Village Tales</h1>
+        <p class="header-subtitle">AI Personification Simulator — Multi-Agent System</p>
+      </div>
+      <div class="header-badge">
+        <span class="badge-dot"></span>
+        Duskendale
+      </div>
+    </div>
   </header>
+
+  <!-- Story Banner -->
+  <div class="story-banner">
+    <div class="story-content">
+      <span class="story-icon">📜</span>
+      <div class="story-text">
+        <strong>The Last Light of Duskendale</strong> — Beneath the crossroads well lies a sealed vault. Sir Besrand the Last went down alone, sealed it with stone and iron. He's dead now. And someone just forged a key.
+      </div>
+    </div>
+  </div>
 
   <!-- Main Layout -->
   <main class="app-container">
@@ -23,14 +41,15 @@
     <section class="panel" aria-label="Map and movement controls">
       <div class="panel-header">
         <span class="icon">🗺️</span>
-        Brightwood Map &amp; Navigation
+        Duskendale Map &amp; Navigation
       </div>
       <div class="panel-body">
 
         <!-- Map Display -->
         <div class="map-container">
-          <img id="map-image" src="/api/map?px=260&py=260" alt="Brightwood village map showing NPC locations and player position">
+          <img id="map-image" src="/api/map?px=1065&py=925" alt="Duskendale village map showing agent locations and player position" title="Click anywhere on the map to walk there">
         </div>
+        <div class="map-hint">🧭 Click anywhere on the map to travel there directly</div>
 
         <!-- Movement Controls -->
         <div class="controls-section">
@@ -46,39 +65,54 @@
 
         <!-- Teleport Controls -->
         <div class="controls-section">
-          <div class="controls-label">Teleport to Villager</div>
+          <div class="controls-label">Teleport to Agent</div>
           <div class="teleport-grid">
-            <button class="btn-teleport" data-location="Town Square">Silas (Town Sq)</button>
-            <button class="btn-teleport" data-location="Market Square">Barnaby (Market)</button>
-            <button class="btn-teleport" data-location="Library">Elena (Library)</button>
-            <button class="btn-teleport" data-location="Docks">Lyra (Docks)</button>
-            <button class="btn-teleport" data-location="South Gate">Marcus (Gate)</button>
+            <button class="btn-teleport" data-location="Sarini's Potion Shoppe">🧪 Sarini</button>
+            <button class="btn-teleport" data-location="Fang Rock Forge">⚒️ Fenn</button>
+            <button class="btn-teleport" data-location="Eastern Road">🛒 Merowin</button>
+            <button class="btn-teleport" data-location="Temple of Kord">⛪ Adalric</button>
+            <button class="btn-teleport" data-location="Midnight Manor">🏚️ Voss</button>
+          </div>
+        </div>
+
+        <!-- Mission Progress -->
+        <div class="controls-section">
+          <div class="controls-label">📋 Quest Progress</div>
+          <div id="mission-tracker" class="mission-tracker">
+            <div class="mission-empty">Explore Duskendale and uncover the mystery...</div>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ===== RIGHT COLUMN: Dialogue Panel ===== -->
-    <section class="panel" aria-label="NPC dialogue interface">
+    <section class="panel" aria-label="Agent dialogue interface">
       <div class="panel-header">
-        <span class="icon">🎙️</span>
-        Voice Conversation
+        <span class="icon">🤖</span>
+        Agent Conversation
       </div>
       <div class="panel-body">
 
-        <!-- NPC Info Banner -->
+        <!-- NPC Info Banner with Avatar -->
         <div id="npc-banner" class="npc-banner exploring">
-          <div class="npc-name">
-            <span id="status-dot" class="status-dot offline"></span>
-            <span id="npc-name">Exploring Brightwood</span>
+          <div class="npc-banner-inner">
+            <div class="npc-avatar-container">
+              <img id="npc-avatar" class="npc-avatar" src="/static/avatars/sarini.png" alt="Agent avatar">
+            </div>
+            <div class="npc-info">
+              <div class="npc-name">
+                <span id="status-dot" class="status-dot offline"></span>
+                <span id="npc-name">Exploring Duskendale</span>
+              </div>
+              <div id="npc-title" class="npc-title">Move closer to an agent on the map</div>
+              <div id="npc-status" class="npc-status">No agent in range</div>
+            </div>
           </div>
-          <div id="npc-title" class="npc-title">Move closer to a villager on the map</div>
-          <div id="npc-status" class="npc-status">No villager in range</div>
         </div>
 
         <!-- Chat History -->
         <div id="chat-container" class="chat-container" role="log" aria-live="polite">
-          <div class="chat-empty" id="chat-empty">Walk near a villager to start a conversation</div>
+          <div class="chat-empty" id="chat-empty">Walk near an agent to start a conversation</div>
         </div>
 
         <!-- Action Buttons -->
@@ -113,7 +147,7 @@
         <!-- Text Input -->
         <div class="text-input-section">
           <div class="text-input-wrapper">
-            <input id="text-input" class="text-input" type="text" placeholder="Type a message (optional)..." autocomplete="off">
+            <input id="text-input" class="text-input" type="text" placeholder="Type a message to the agent..." autocomplete="off">
             <button id="btn-send" class="btn-send">Send</button>
           </div>
         </div>
@@ -121,7 +155,7 @@
         <!-- NPC Audio Response -->
         <div class="audio-section">
           <div class="audio-label">
-            🔊 NPC Voice Response
+            🔊 Agent Voice Response
           </div>
           <audio id="npc-audio-player" class="audio-player" controls preload="none"></audio>
         </div>
@@ -130,6 +164,12 @@
     </section>
 
   </main>
+
+  <!-- RAG Memory Indicator -->
+  <div class="rag-indicator" id="rag-indicator">
+    <span class="rag-dot"></span>
+    <span class="rag-text">RAG Memory Active</span>
+  </div>
 
   <!-- Loading Overlay -->
   <div id="loading-overlay" class="loading-overlay">
