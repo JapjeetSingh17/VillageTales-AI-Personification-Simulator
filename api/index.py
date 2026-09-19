@@ -227,6 +227,7 @@ async def api_talk(
         "user_text": user_text or "",
         "npc_text": "",
         "npc_audio_path": None,
+        "npc_audio_base64": None,
         "player_pos": tuple(pos),
         "vault_threat": "ACTIVE",
         "rag_context": "",
@@ -234,12 +235,13 @@ async def api_talk(
 
     final_state = npc_graph.invoke(graph_input)
 
-    # Build audio URL
-    audio_url = None
-    npc_audio = final_state.get("npc_audio_path")
-    if npc_audio and os.path.exists(npc_audio):
-        audio_filename = os.path.basename(npc_audio)
-        audio_url = f"/audio/{audio_filename}"
+    # Build audio URL - prefer base64 data URI so Vercel serverless never gets 404
+    audio_url = final_state.get("npc_audio_base64")
+    if not audio_url:
+        npc_audio = final_state.get("npc_audio_path")
+        if npc_audio and os.path.exists(npc_audio):
+            audio_filename = os.path.basename(npc_audio)
+            audio_url = f"/audio/{audio_filename}"
 
     # Extract what the user said (from STT or direct text)
     user_said = final_state.get("user_text", user_text)

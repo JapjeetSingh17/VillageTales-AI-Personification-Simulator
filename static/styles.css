@@ -616,6 +616,40 @@ body::after {
   opacity: 0.7;
 }
 
+.chat-msg-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.btn-replay-voice {
+  background: rgba(99, 102, 241, 0.14);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.btn-replay-voice:hover {
+  background: rgba(99, 102, 241, 0.3);
+  color: #ffffff;
+  border-color: #818cf8;
+}
+
+.btn-replay-voice svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
 /* ---------- Action Buttons Row ---------- */
 .action-row {
   display: flex;

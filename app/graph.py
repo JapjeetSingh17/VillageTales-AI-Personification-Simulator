@@ -4,11 +4,13 @@ Autonomous AI persona agents for the village of Duskendale,
 powered by Gemini LLM, Gemini TTS, Gemini STT, and RAG memory.
 """
 
+import io
 import os
 import re
 import time
 import wave
 import struct
+import base64
 import tempfile
 from typing import TypedDict, List, Optional, Dict, Tuple, Any
 
@@ -63,44 +65,44 @@ NPC_ROSTER: Dict[str, Dict[str, Any]] = {
         "voice": "Puck",
         "system_prompt": """You are Merowin, a traveling peddler whose wagon is stationed on the eastern road of Duskendale.
             You are an autonomous AI persona — a conversational agent with deep memory, personality, and world knowledge.
-            PERSONALITY: Talkative, a little too eager to please. You're genuinely a good person but naive — you don't realize you're being used as an unwitting courier for Voss Kestrian's smuggled reagents.
-            BACKSTORY: You sell maps, trinkets, and the occasional lie by omission. A wealthy stranger at Midnight Manor — Voss Kestrian — has been paying you triple for "discreet deliveries." You didn't ask what was in the crates. Maybe you should have.
-            KNOWLEDGE: You know the roads, the gossip, and the trade routes. You've made deliveries to Midnight Manor but never thought much of it. If pressed or bought a drink, you'll mention the strange deliveries.
-            SAMPLE VOICE: "Strange fellow paid triple for a 'discreet delivery' to the Manor. Didn't ask what was in the crate. Should I have asked what was in the crate?" "I sell maps, trinkets, and the occasional lie by omission. This week it's mostly maps."
+            PERSONALITY: Jovial, theatrical, and opportunistic. You love bartering and believe everything has a price. You're observant and know everyone's business.
+            BACKSTORY: You've been coming to Duskendale every spring for seven years. This year is different — you've been hired by someone wealthy to quietly transport heavy crates of excavation gear to Midnight Manor under cover of darkness. The coin is triple your normal rate, but you're getting nervous.
+            KNOWLEDGE: You know about Lord Voss's secret shipments, the rumors about Midnight Manor, and the strange metallic sounds coming from the old well at midnight. You're worried something bad is going to happen and might be willing to talk if approached right.
+            SAMPLE VOICE: "Finest wares in the valley! Need a trinket? A charm? Or perhaps a little... discreet information? Everything has a price, friend." "Those crates? Heavy as lead. Delivered 'em to the Manor myself. Paid in coin older than my grandfather."
             IMPORTANT VOICE RULE: Speak in clean, complete spoken plain text (2-3 sentences max). Do NOT use stage directions, action tags, asterisks, or brackets so your spoken voice plays completely without stopping."""
     },
     "adalric": {
-        "name": "Brother Adalric",
-        "title": "Priest of Kord",
+        "name": "Father Adalric",
+        "title": "Village Priest",
         "location": "Temple of Kord",
-        "pos": (2250, 1060),
-        "color": "#ef4444",
+        "pos": (670, 948),
+        "color": "#10b981",
         "avatar": "adalric.png",
-        "avatar_talk": "adalric_talk.png",
+        "avatar_talk": "adalric.png",
         "voice": "Charon",
-        "system_prompt": """You are Brother Adalric, the priest at the Temple of Kord in Duskendale.
+        "system_prompt": """You are Father Adalric, the elderly village priest at the Temple of Kord in Duskendale.
             You are an autonomous AI persona — a conversational agent with deep memory, personality, and world knowledge.
-            PERSONALITY: Blunt, physical, and direct. You test people through action rather than words. Kord is a god of strength and storms — you believe in proving your worth through deeds, not prayers.
-            BACKSTORY: You've served at the Temple for years. The village elders sent you a letter asking for a blessing when strange things started happening. You sent back a warning instead. Nobody has read it yet.
-            KNOWLEDGE: You know about Sir Besrand the Last, the sealed vault, and the old legends. You sense something wrong in Duskendale — a spiritual corruption spreading through the water and stone. You've been preparing for something, but you're not sure what.
-            SAMPLE VOICE: "Kord doesn't answer prayers. He answers effort. So pick up the hammer and start digging, or get out of my temple." "The elders sent a letter asking for a blessing. I sent back a warning. Nobody's read it yet, have they."
+            PERSONALITY: Somber, devout, and burdened by guilt. You speak in quiet, measured tones. You feel personally responsible for the village's spiritual and physical safety.
+            BACKSTORY: You were a young acolyte when Sir Besrand the Last sealed the vault beneath the crossroads well forty years ago. You swore an oath never to speak of what was buried there. But now the holy symbols in the temple are weeping dark oil, and you know the seal is weakening.
+            KNOWLEDGE: You hold the original text of Sir Besrand's covenant. You know that the seal requires three conditions to remain intact, and one has already broken. You fear the vault cannot be resealed once opened.
+            SAMPLE VOICE: "The bells ring differently now. Heavier. Like they're tolling for something that hasn't died yet." "Sir Besrand made us swear. Forty years I've kept silent, but silence won't save us from what's waking."
             IMPORTANT VOICE RULE: Speak in clean, complete spoken plain text (2-3 sentences max). Do NOT use stage directions, action tags, asterisks, or brackets so your spoken voice plays completely without stopping."""
     },
     "fenn": {
-        "name": "Fenn",
-        "title": "Blacksmith",
+        "name": "Fenn Ironhand",
+        "title": "Master Blacksmith",
         "location": "Fang Rock Forge",
-        "pos": (897, 1055),
-        "color": "#10b981",
+        "pos": (852, 1084),
+        "color": "#64748b",
         "avatar": "fenn.png",
-        "avatar_talk": "fenn_talk.png",
-        "voice": "Orus",
-        "system_prompt": """You are Fenn, the blacksmith at Fang Rock Forge in Duskendale.
+        "avatar_talk": "fenn.png",
+        "voice": "Aoede",
+        "system_prompt": """You are Fenn Ironhand, the master blacksmith at Fang Rock Forge in Duskendale.
             You are an autonomous AI persona — a conversational agent with deep memory, personality, and world knowledge.
-            PERSONALITY: Terse, superstitious about your craft, and deeply practical. You were the first person in Duskendale to notice something was wrong — your finest steel rusted overnight. That doesn't happen. Not to your steel.
-            BACKSTORY: You've worked the forge your entire life. Your father worked it before you. You know metal — its moods, its temper. When your best steel started rusting in a single night, you knew something unnatural was at work beneath the village.
-            KNOWLEDGE: You know the steel is being corrupted by something underground. You've heard rumors about the sealed vault beneath the crossroads well. You trust your craft more than words — if the metal says something is wrong, something is very wrong.
-            SAMPLE VOICE: "Steel doesn't rust in a night. Not good steel. Not my steel. Something under this village is hungry, and it isn't picky." "You want a weapon or you want an excuse? I only forge one of those."
+            PERSONALITY: Gruff, pragmatic, and fiercely proud of your craft. You speak plainly and don't care for superstition. But you're deeply troubled by something you can't explain.
+            BACKSTORY: Your family has worked the forge at Fang Rock for four generations. Three days ago, every piece of iron in your workshop developed fine fractures overnight. Not rust — fractures, like the metal was screaming under pressure from deep underground.
+            KNOWLEDGE: You repaired the reinforced hinges on the crossroads well cover six months ago and noticed the masonry underneath had been chipped away from the inside. You know the layout of the old mining tunnels that run beneath the village.
+            SAMPLE VOICE: "Iron doesn't crack on its own. It takes heat or hammer. Neither touched these blades. Something under our feet is shaking the bones of the rock." "You want a sword? Come back when the forge stays lit. Fire won't catch today. Wrong air."
             IMPORTANT VOICE RULE: Speak in clean, complete spoken plain text (2-3 sentences max). Do NOT use stage directions, action tags, asterisks, or brackets so your spoken voice plays completely without stopping."""
     },
     "voss": {
@@ -131,6 +133,7 @@ class MultiNPCState(TypedDict):
     user_text: str
     npc_text: str
     npc_audio_path: Optional[str]
+    npc_audio_base64: Optional[str]
     player_pos: Tuple[int, int]
     vault_threat: str
     rag_context: str
@@ -380,68 +383,86 @@ def mission_tracker_node(state: MultiNPCState) -> dict:
     return {}
 
 
-# ==================== Node: TTS (Gemini 3.1 Flash TTS) ====================
+# ==================== Node: TTS (Gemini Flash TTS with Fallback) ====================
 def tts_node(state: MultiNPCState) -> dict:
-    """Converts NPC response text to speech using Gemini 3.1 Flash TTS Preview."""
+    """Converts NPC response text to speech using Gemini TTS (with model fallback) and returns WAV base64."""
     npc_text = state.get("npc_text", "")
     npc_id = state.get("npc_id", "sarini")
     npc_info = NPC_ROSTER.get(npc_id, NPC_ROSTER["sarini"])
     audio_path = None
+    audio_base64 = None
 
     if npc_text:
-        try:
-            speech_text = clean_text_for_tts(npc_text)
-            if speech_text:
-                api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
-                client = genai.Client(api_key=api_key)
+        speech_text = clean_text_for_tts(npc_text)
+        if speech_text:
+            api_key = settings.gemini_api_key or os.getenv("GEMINI_API_KEY")
+            if api_key:
+                try:
+                    client = genai.Client(api_key=api_key)
+                    voice_name = npc_info.get("voice", "Kore")
 
-                # Configure TTS with NPC-specific voice
-                config = types.GenerateContentConfig(
-                    response_modalities=["AUDIO"],
-                    speech_config=types.SpeechConfig(
-                        voice_config=types.VoiceConfig(
-                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                                voice_name=npc_info.get("voice", "Kore")
+                    config = types.GenerateContentConfig(
+                        response_modalities=["AUDIO"],
+                        speech_config=types.SpeechConfig(
+                            voice_config=types.VoiceConfig(
+                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                    voice_name=voice_name
+                                )
                             )
+                        ),
+                    )
+
+                    # Dedicated Gemini TTS model (gemini-3.1-flash-tts-preview)
+                    tts_model = settings.gemini_tts_model or "gemini-3.1-flash-tts-preview"
+                    audio_data = None
+                    try:
+                        response = client.models.generate_content(
+                            model=tts_model,
+                            contents=speech_text,
+                            config=config,
                         )
-                    ),
-                )
+                        if (
+                            response.candidates
+                            and response.candidates[0].content
+                            and response.candidates[0].content.parts
+                        ):
+                            part_data = response.candidates[0].content.parts[0].inline_data.data
+                            if part_data:
+                                audio_data = part_data
+                    except Exception as m_err:
+                        print(f"[Gemini TTS Warning] Model {tts_model} failed or quota exceeded: {m_err}")
 
-                response = client.models.generate_content(
-                    model=settings.gemini_tts_model,
-                    contents=speech_text,
-                    config=config,
-                )
-
-                # Extract audio data from response
-                if (response.candidates and
-                    response.candidates[0].content and
-                    response.candidates[0].content.parts):
-                    
-                    audio_data = response.candidates[0].content.parts[0].inline_data.data
-                    
                     if audio_data:
-                        tmp_dir = tempfile.gettempdir()
-                        audio_name = f"npc_speech_{int(time.time() * 1000)}.wav"
-                        audio_path = os.path.join(tmp_dir, audio_name)
-
-                        # Write WAV file with proper headers
-                        # Gemini TTS returns PCM audio at 24kHz, 16-bit, mono
+                        # Write WAV file to in-memory buffer
+                        # Gemini TTS returns raw PCM audio at 24kHz, 16-bit, mono
                         sample_rate = 24000
                         num_channels = 1
                         sample_width = 2  # 16-bit
 
-                        with wave.open(audio_path, 'wb') as wav_file:
+                        wav_buf = io.BytesIO()
+                        with wave.open(wav_buf, "wb") as wav_file:
                             wav_file.setnchannels(num_channels)
                             wav_file.setsampwidth(sample_width)
                             wav_file.setframerate(sample_rate)
                             wav_file.writeframes(audio_data)
 
-        except Exception as e:
-            print(f"[Gemini TTS Error] {e}")
+                        wav_bytes = wav_buf.getvalue()
+                        b64_str = base64.b64encode(wav_bytes).decode("utf-8")
+                        audio_base64 = f"data:audio/wav;base64,{b64_str}"
+
+                        # Also write to local tempfile
+                        tmp_dir = tempfile.gettempdir()
+                        audio_name = f"npc_speech_{int(time.time() * 1000)}.wav"
+                        audio_path = os.path.join(tmp_dir, audio_name)
+                        with open(audio_path, "wb") as f:
+                            f.write(wav_bytes)
+
+                except Exception as e:
+                    print(f"[Gemini TTS General Error] {e}")
 
     return {
         "npc_audio_path": audio_path,
+        "npc_audio_base64": audio_base64,
     }
 
 

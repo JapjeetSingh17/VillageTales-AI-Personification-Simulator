@@ -228,6 +228,120 @@
     renderMessages(msgs);
   }
 
+  // Helper to create replay button for NPC dialogue
+  function createReplayButton(text, audioUrl) {
+    const actions = document.createElement("div");
+    actions.className = "chat-msg-actions";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-replay-voice";
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+      Play Voice
+    `;
+    btn.addEventListener("click", () => {
+      playNpcVoice(audioUrl, state.activeNpc, text);
+    });
+    actions.appendChild(btn);
+    return actions;
+  }
+
+  // ==================== NPC VOICE SYNTHESIS & PLAYBACK ====================
+  function speakWithWebSpeech(npc, text) {
+    if (!("speechSynthesis" in window) || !text) return;
+
+    try {
+      window.speechSynthesis.cancel();
+
+      // Clean brackets, asterisks, or system notes
+      const clean = text.replace(/\[.*?\]/g, "").replace(/\(.*?\)/g, "").replace(/\*/g, "").trim();
+      if (!clean) return;
+
+      const utterance = new SpeechSynthesisUtterance(clean);
+      const voices = window.speechSynthesis.getVoices() || [];
+      const npcId = npc ? npc.id : "sarini";
+
+      if (npcId === "sarini") {
+        utterance.pitch = 1.15;
+        utterance.rate = 0.95;
+        const v = voices.find((v) => v.lang && v.lang.startsWith("en") && (v.name.includes("Female") || v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira")));
+        if (v) utterance.voice = v;
+      } else if (npcId === "voss") {
+        utterance.pitch = 0.75;
+        utterance.rate = 0.9;
+        const v = voices.find((v) => v.lang && v.lang.startsWith("en") && (v.name.includes("Male") || v.name.includes("Daniel") || v.name.includes("Alex") || v.name.includes("David")));
+        if (v) utterance.voice = v;
+      } else if (npcId === "merowin") {
+        utterance.pitch = 0.95;
+        utterance.rate = 1.05;
+      } else if (npcId === "adalric") {
+        utterance.pitch = 0.82;
+        utterance.rate = 0.9;
+      } else {
+        utterance.pitch = 0.8;
+        utterance.rate = 0.95;
+      }
+
+      utterance.onstart = () => {
+        if (els.npcBanner) els.npcBanner.classList.add("speaking");
+        if (state.activeNpc && state.activeNpc.avatar_talk_url) {
+          els.npcAvatar.src = state.activeNpc.avatar_talk_url;
+        }
+      };
+
+      utterance.onend = () => {
+        if (els.npcBanner) els.npcBanner.classList.remove("speaking");
+        if (state.activeNpc && state.activeNpc.avatar_url) {
+          els.npcAvatar.src = state.activeNpc.avatar_url;
+        }
+      };
+
+      utterance.onerror = () => {
+        if (els.npcBanner) els.npcBanner.classList.remove("speaking");
+        if (state.activeNpc && state.activeNpc.avatar_url) {
+          els.npcAvatar.src = state.activeNpc.avatar_url;
+        }
+      };
+
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      console.warn("[Web Speech API Exception]", e);
+    }
+  }
+
+  function playNpcVoice(audioUrl, npc, fallbackText) {
+    if (audioUrl) {
+      if (!els.audioPlayer) return;
+      els.audioPlayer.pause();
+      els.audioPlayer.currentTime = 0;
+      els.audioPlayer.src = audioUrl;
+
+      // Animate speaking avatar expression
+      if (els.npcBanner) els.npcBanner.classList.add("speaking");
+      if (npc && npc.avatar_talk_url) {
+        els.npcAvatar.src = npc.avatar_talk_url;
+      }
+
+      els.audioPlayer.play()
+        .then(() => {
+          // Playing normally
+        })
+        .catch((err) => {
+          console.warn("[Autoplay Policy or Audio Decode Warning] Falling back to Web Speech:", err);
+          speakWithWebSpeech(npc, fallbackText);
+        });
+
+      els.audioPlayer.onended = () => {
+        if (els.npcBanner) els.npcBanner.classList.remove("speaking");
+        if (state.activeNpc && state.activeNpc.avatar_url) {
+          els.npcAvatar.src = state.activeNpc.avatar_url;
+        }
+      };
+    } else {
+      speakWithWebSpeech(npc, fallbackText);
+    }
+  }
+
   function renderMessages(msgs) {
     els.chatContainer.innerHTML = "";
 
@@ -256,6 +370,11 @@
 
       contentDiv.appendChild(label);
       contentDiv.appendChild(text);
+
+      if (msg.role !== "user") {
+        contentDiv.appendChild(createReplayButton(msg.content, msg.audio_url));
+      }
+
       div.appendChild(contentDiv);
       els.chatContainer.appendChild(div);
     });
@@ -264,12 +383,12 @@
     els.chatContainer.scrollTop = els.chatContainer.scrollHeight;
   }
 
-  function appendMessage(role, content) {
+  function appendMessage(role, content, audioUrl = null) {
     if (!state.activeNpc) return;
 
     const npcId = state.activeNpc.id;
     if (!state.conversations[npcId]) state.conversations[npcId] = [];
-    state.conversations[npcId].push({ role, content });
+    state.conversations[npcId].push({ role, content, audio_url: audioUrl });
 
     // Remove empty state message
     const empty = els.chatContainer.querySelector(".chat-empty");
@@ -299,24 +418,14 @@
 
     contentDiv.appendChild(label);
     contentDiv.appendChild(text);
+
+    if (role !== "user") {
+      contentDiv.appendChild(createReplayButton(content, audioUrl));
+    }
+
     div.appendChild(contentDiv);
     els.chatContainer.appendChild(div);
     els.chatContainer.scrollTop = els.chatContainer.scrollHeight;
-
-    // Show speaking avatar expression when NPC responds
-    if (role !== "user" && state.activeNpc) {
-      els.npcBanner.classList.add("speaking");
-      if (state.activeNpc.avatar_talk_url) {
-        els.npcAvatar.src = state.activeNpc.avatar_talk_url;
-      }
-      // Revert to calm after 3 seconds
-      setTimeout(() => {
-        els.npcBanner.classList.remove("speaking");
-        if (state.activeNpc && state.activeNpc.avatar_url) {
-          els.npcAvatar.src = state.activeNpc.avatar_url;
-        }
-      }, 3000);
-    }
   }
 
   // ==================== SPEECH CONTROLS ====================
@@ -428,13 +537,10 @@
       const data = await res.json();
 
       if (data.user_text) appendMessage("user", data.user_text);
-      if (data.npc_text) appendMessage("assistant", data.npc_text);
+      if (data.npc_text) appendMessage("assistant", data.npc_text, data.audio_url);
 
-      // Play NPC audio
-      if (data.audio_url) {
-        els.audioPlayer.src = data.audio_url;
-        els.audioPlayer.play().catch(() => {});
-      }
+      // Play NPC audio or fallback synthesis
+      playNpcVoice(data.audio_url, state.activeNpc, data.npc_text);
 
       // Poll missions after interaction
       pollMissions();
@@ -483,12 +589,10 @@
       const data = await res.json();
 
       if (data.user_text) appendMessage("user", data.user_text);
-      if (data.npc_text) appendMessage("assistant", data.npc_text);
+      if (data.npc_text) appendMessage("assistant", data.npc_text, data.audio_url);
 
-      if (data.audio_url) {
-        els.audioPlayer.src = data.audio_url;
-        els.audioPlayer.play().catch(() => {});
-      }
+      // Play NPC audio or fallback synthesis
+      playNpcVoice(data.audio_url, state.activeNpc, data.npc_text);
 
       // Poll missions after interaction
       pollMissions();
