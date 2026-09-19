@@ -906,37 +906,49 @@
 
   // ==================== TEXT INPUT ====================
   function bindTextInput() {
-    els.btnSend.addEventListener("click", sendTextMessage);
-    els.textInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+    if (els.btnSend) {
+      els.btnSend.addEventListener("click", (e) => {
         e.preventDefault();
         sendTextMessage();
-      }
-    });
+      });
+    }
+    if (els.textInput) {
+      els.textInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendTextMessage();
+        }
+      });
+    }
   }
 
   async function sendTextMessage() {
+    if (!els.textInput) return;
     const text = els.textInput.value.trim();
     if (!text || state.isProcessing) return;
 
     const npc = state.activeNpc || NPC_INFO.sarini;
     els.textInput.value = "";
+
+    // Immediately display user message in chat for instant visual feedback
+    appendMessage("user", text);
+
     showLoading(`Consulting ${npc.name}...`);
 
     const npcId = npc.id;
-    const messages = state.conversations[npcId] || [];
+    // Messages excluding the newly added user message (already sent via user_text parameter)
+    const history = (state.conversations[npcId] || []).slice(0, -1);
 
     const formData = new FormData();
     formData.append("user_text", text);
     formData.append("npc_id", npcId);
-    formData.append("messages", JSON.stringify(messages));
+    formData.append("messages", JSON.stringify(history));
     formData.append("player_pos", JSON.stringify(state.playerPos));
 
     try {
       const res = await fetch("/api/talk", { method: "POST", body: formData });
       const data = await res.json();
 
-      if (data.user_text) appendMessage("user", data.user_text);
       if (data.npc_text) appendMessage("assistant", data.npc_text, data.audio_url);
 
       playNpcVoice(data.audio_url, state.activeNpc, data.npc_text);
@@ -946,6 +958,7 @@
       appendMessage("assistant", "(Connection error — please try again)");
     } finally {
       hideLoading();
+      if (els.textInput) els.textInput.focus();
     }
   }
 
@@ -986,16 +999,16 @@
   // ==================== LOADING ====================
   function showLoading(text) {
     state.isProcessing = true;
-    els.loadingText.textContent = text || "Consulting the oracles...";
-    els.loadingOverlay.classList.add("active");
-    els.btnSpeak.disabled = true;
-    els.btnSend.disabled = true;
+    if (els.loadingText) els.loadingText.textContent = text || "Consulting the oracles...";
+    if (els.loadingOverlay) els.loadingOverlay.classList.add("active");
+    if (els.btnSpeak) els.btnSpeak.disabled = true;
+    if (els.btnSend) els.btnSend.disabled = true;
   }
 
   function hideLoading() {
     state.isProcessing = false;
-    els.loadingOverlay.classList.remove("active");
-    els.btnSpeak.disabled = false;
-    els.btnSend.disabled = false;
+    if (els.loadingOverlay) els.loadingOverlay.classList.remove("active");
+    if (els.btnSpeak) els.btnSpeak.disabled = false;
+    if (els.btnSend) els.btnSend.disabled = false;
   }
 })();
