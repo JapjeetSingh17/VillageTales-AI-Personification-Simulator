@@ -179,29 +179,66 @@ def stt_and_input_processor(state: MultiNPCState) -> dict:
                     "mp3": "audio/mpeg",
                     "ogg": "audio/ogg",
                     "m4a": "audio/mp4",
+                    "mp4": "audio/mp4",
                 }
                 mime_type = mime_map.get(ext, "audio/webm")
 
-                # Use generate_content with audio for transcription
-                response = client.models.generate_content(
-                    model=settings.gemini_stt_model,
-                    contents=[
-                        types.Content(
-                            parts=[
-                                types.Part.from_bytes(
-                                    data=audio_bytes,
-                                    mime_type=mime_type,
-                                ),
+                transcribed_text = ""
+
+                # Step 1: Try dedicated STT model (gemini-3.5-transcribe)
+                stt_model = settings.gemini_stt_model or "gemini-3.5-transcribe"
+                try:
+                    response = client.models.generate_content(
+                        model=stt_model,
+                        contents=[
+                            types.Content(
+                                parts=[
+                                    types.Part.from_bytes(
+                                        data=audio_bytes,
+                                        mime_type=mime_type,
+                                    ),
+                                ]
+                            )
+                        ],
+                    )
+                    # Extract from audio_transcription attribute or text attribute
+                    if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
+                        for part in response.candidates[0].content.parts:
+                            if hasattr(part, "audio_transcription") and part.audio_transcription:
+                                transcribed_text += getattr(part.audio_transcription, "text", "") or ""
+                            elif hasattr(part, "text") and part.text:
+                                transcribed_text += part.text or ""
+                    elif response.text:
+                        transcribed_text = response.text
+                except Exception as stt_err:
+                    print(f"[Primary STT Warning] {stt_model}: {stt_err}. Falling back to multimodal Flash...")
+
+                # Step 2: Fallback to multimodal Gemini model (gemini-3.6-flash) if STT was empty or errored
+                if not transcribed_text.strip():
+                    try:
+                        fallback_model = settings.gemini_model or "gemini-3.6-flash"
+                        fb_response = client.models.generate_content(
+                            model=fallback_model,
+                            contents=[
+                                types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
+                                "Transcribe the exact words spoken in this audio. Output only the verbatim transcript with no commentary, quotes, or formatting."
                             ]
                         )
-                    ],
-                )
-                user_text = response.text.strip() if response.text else ""
-        except Exception as e:
-            print(f"[Gemini STT Error] {e}")
+                        if fb_response.text and fb_response.text.strip():
+                            transcribed_text = fb_response.text.strip().strip('"\'')
+                    except Exception as fb_err:
+                        print(f"[Fallback STT Error] {fb_err}")
 
+                user_text = transcribed_text.strip()
+        except Exception as e:
+            print(f"[Gemini STT General Error] {e}")
+
+    # Fallback only if both text and audio were completely empty
     if not user_text:
-        user_text = "Hello!"
+        if user_audio:
+            user_text = "(inaudible speech)"
+        else:
+            user_text = "Hello!"
 
     updated_messages = list(state.get("messages", []))
     updated_messages.append(HumanMessage(content=user_text))

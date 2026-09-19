@@ -336,16 +336,34 @@
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      state.mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      
+      let mimeType = "audio/webm";
+      let fileExt = "webm";
+      if (typeof MediaRecorder.isTypeSupported === "function") {
+        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+          mimeType = "audio/webm;codecs=opus";
+          fileExt = "webm";
+        } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+          mimeType = "audio/webm";
+          fileExt = "webm";
+        } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+          mimeType = "audio/mp4";
+          fileExt = "mp4";
+        }
+      }
+
+      state.recordingMimeType = mimeType;
+      state.recordingExt = fileExt;
+      state.mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
       state.audioChunks = [];
 
       state.mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) state.audioChunks.push(e.data);
+        if (e.data && e.data.size > 0) state.audioChunks.push(e.data);
       };
 
       state.mediaRecorder.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(state.audioChunks, { type: "audio/webm" });
+        const blob = new Blob(state.audioChunks, { type: state.recordingMimeType || "audio/webm" });
         sendAudioToApi(blob);
       };
 
@@ -399,7 +417,8 @@
     const messages = state.conversations[npcId] || [];
 
     const formData = new FormData();
-    formData.append("audio", audioBlob, "recording.webm");
+    const fileName = "recording." + (state.recordingExt || "webm");
+    formData.append("audio", audioBlob, fileName);
     formData.append("npc_id", npcId);
     formData.append("messages", JSON.stringify(messages));
     formData.append("player_pos", JSON.stringify(state.playerPos));
