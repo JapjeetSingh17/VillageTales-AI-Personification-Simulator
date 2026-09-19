@@ -307,7 +307,8 @@ def npc_reasoning_node(state: MultiNPCState) -> dict:
                 model=settings.gemini_model,
                 google_api_key=api_key,
                 temperature=0.7,
-                max_output_tokens=300,
+                max_output_tokens=2048,
+                thinking_budget=0,
                 max_retries=1,
             )
 
@@ -360,7 +361,7 @@ def npc_reasoning_node(state: MultiNPCState) -> dict:
                     groq_res = groq_client.chat.completions.create(
                         model="openai/gpt-oss-120b",
                         messages=chat_history,
-                        max_tokens=300,
+                        max_tokens=1024,
                         temperature=0.7,
                     )
                     if groq_res and groq_res.choices:
