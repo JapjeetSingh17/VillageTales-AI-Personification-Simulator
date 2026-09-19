@@ -6,6 +6,9 @@
 ## Story Overview
 Decades ago, Sir Besrand the Last sealed an ancient vault beneath the crossroads well after an unknown entity drained the magic from Duskendale overnight. Sir Besrand forbade anyone from forging a key to that vault, but decades later, the mysterious newcomer Voss Kestrian has purchased Midnight Manor and covertly begun tunneling beneath the lake into the vault. As subterranean corruption leaks into the water table, blacksmith Fenn notices his finest steel rusting overnight and alchemist Sarini discovers her protective wards failing, prompting the player to investigate the villagers' warnings, uncover Voss's tunnel, and decide the fate of Duskendale.
 
+## Live Demo
+project link: https://graph-npc-framework.vercel.app?_vercel_share=rg8PkghCYmxWW96iU31E57uuYKU0nJSc
+
 ## Overview
 - Built a lightweight multi-agent personification simulator using LangGraph, Google Gemini, and ChromaDB to power autonomous village characters with persistent memory and multimodal voice interactions.
 
