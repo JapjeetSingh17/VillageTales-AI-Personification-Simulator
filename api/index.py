@@ -118,18 +118,18 @@ async def api_move(data: dict):
     step = 90
 
     if target_pos and isinstance(target_pos, (list, tuple)) and len(target_pos) == 2:
-        px = max(60, min(2340, int(target_pos[0])))
-        py = max(60, min(1690, int(target_pos[1])))
+        px = max(50, min(1240, int(target_pos[0])))
+        py = max(50, min(790, int(target_pos[1])))
     elif direction == "up":
-        py = max(60, py - step)
+        py = max(50, py - step)
     elif direction == "down":
-        py = min(1690, py + step)
+        py = min(790, py + step)
     elif direction == "left":
-        px = max(60, px - step)
+        px = max(50, px - step)
     elif direction == "right":
-        px = min(2340, px + step)
+        px = min(1240, px + step)
     elif direction == "reset":
-        px, py = 1065, 925
+        px, py = 630, 510
 
     npc_id, npc_info, dist = get_closest_npc((px, py))
 
@@ -155,13 +155,13 @@ async def api_move(data: dict):
 async def api_teleport(data: dict):
     """Teleport the player right to an NPC location."""
     location = data.get("location", "Sarini's Potion Shoppe")
-    target_pos = [1065, 925]
+    target_pos = [630, 510]
 
     for npc in NPC_ROSTER.values():
         if npc["location"].lower() == location.lower() or npc["name"].lower() in location.lower():
-            # Position player within proximity threshold of the NPC
+            # Position player safely adjacent to the NPC within map bounds
             nx, ny = npc["pos"]
-            target_pos = [nx, ny + 40]
+            target_pos = [max(60, min(1230, nx)), max(60, min(780, ny + 35))]
             break
 
     npc_id, npc_info, dist = get_closest_npc(tuple(target_pos))
@@ -188,7 +188,7 @@ async def api_teleport(data: dict):
 async def api_talk(
     npc_id: str = Form(...),
     messages: str = Form("[]"),
-    player_pos: str = Form("[1065, 925]"),
+    player_pos: str = Form("[630, 510]"),
     user_text: str = Form(""),
     audio: UploadFile = File(None),
 ):

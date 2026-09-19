@@ -251,6 +251,28 @@
             <div class="mission-empty">Explore Duskendale and uncover the mystery...</div>
           </div>
         </div>
+
+        <!-- Story Clues & Next Steps Card -->
+        <div class="story-leads-card">
+          <div class="subpanel-title">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#d4a359" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>Story Clues & Next Steps</span>
+          </div>
+          <div class="story-lead-body">
+            <div class="story-lead-badge-row">
+              <span class="story-lead-tag">Active Investigation</span>
+              <span class="story-lead-counter" id="lead-stage-label">Step 1 of 5</span>
+            </div>
+            <p class="story-lead-text" id="story-lead-text">
+              Fenn's forge tools cracked overnight and Sarini's protective wards are failing. Speak with Fenn at Fang Rock Forge or Sarini at the Potion Shoppe to uncover what is draining the village's magic.
+            </p>
+            <div class="story-lead-quick-actions">
+              <button class="btn-lead-teleport" data-npc="fenn" data-loc="Fang Rock Forge">Visit Fenn</button>
+              <button class="btn-lead-teleport" data-npc="sarini" data-loc="Sarini's Potion Shoppe">Visit Sarini</button>
+              <button class="btn-lead-teleport" data-npc="merowin" data-loc="Eastern Road">Question Merowin</button>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -339,6 +361,14 @@
           <div class="record-hidden-controls" style="display:none;">
             <button id="btn-record" class="btn-record">&#9679; Record</button>
             <button id="btn-stop-record" class="btn-record" disabled>&#9632; Stop</button>
+          </div>
+        </div>
+
+        <!-- Story Clue / Suggested Dialogue Topics -->
+        <div class="topic-chips-wrapper">
+          <span class="topic-chips-label">Ask about:</span>
+          <div class="topic-chips" id="topic-chips">
+            <!-- Populated dynamically based on active NPC -->
           </div>
         </div>
 
@@ -490,11 +520,210 @@
 
   </div>
 
-  <!-- Loading Overlay -->
-  <div id="loading-overlay" class="loading-overlay">
-    <div class="loading-content">
-      <div class="loading-spinner"></div>
-      <div id="loading-text" class="loading-text">Consulting the oracles...</div>
+  <!-- ==================== THEMATIC NAVIGATION MODALS ==================== -->
+
+  <!-- Modal 1: NPCs Directory -->
+  <div id="modal-npcs" class="rpg-modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d4a359" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+          <h3>Duskendale NPC Directory</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modal-npcs" title="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">The notable figures residing within Duskendale. Select any resident to converse with them.</p>
+        <div class="modal-npc-grid">
+          <div class="modal-npc-card" data-npc="sarini" data-loc="Sarini's Potion Shoppe">
+            <img src="/static/images/sarini_ref.png" class="modal-npc-avatar" alt="Sarini">
+            <div class="modal-npc-details">
+              <h4>Sarini</h4>
+              <span class="modal-npc-role">Potion Shop Owner — Potion Shoppe</span>
+              <p class="modal-npc-desc">Guarded alchemist who maintains the village wards. Suspicious of the magic draining underground.</p>
+              <button class="btn-modal-action">Converse with Sarini</button>
+            </div>
+          </div>
+          <div class="modal-npc-card" data-npc="fenn" data-loc="Fang Rock Forge">
+            <img src="/static/images/fenn_ref.png" class="modal-npc-avatar" alt="Fenn">
+            <div class="modal-npc-details">
+              <h4>Fenn Ironhand</h4>
+              <span class="modal-npc-role">Master Blacksmith — Fang Rock Forge</span>
+              <p class="modal-npc-desc">Gruff pragmatic craftsman troubled by unexplainable fractures appearing across his forged steel.</p>
+              <button class="btn-modal-action">Converse with Fenn</button>
+            </div>
+          </div>
+          <div class="modal-npc-card" data-npc="merowin" data-loc="Eastern Road">
+            <img src="/static/images/merowin_ref.png" class="modal-npc-avatar" alt="Merowin">
+            <div class="modal-npc-details">
+              <h4>Merowin</h4>
+              <span class="modal-npc-role">Traveling Peddler — Eastern Road</span>
+              <p class="modal-npc-desc">Talkative peddler hired to move heavy sealed excavation crates to Midnight Manor at midnight.</p>
+              <button class="btn-modal-action">Converse with Merowin</button>
+            </div>
+          </div>
+          <div class="modal-npc-card" data-npc="adalric" data-loc="Temple of Kord">
+            <img src="/static/images/adalric_ref.png" class="modal-npc-avatar" alt="Adalric">
+            <div class="modal-npc-details">
+              <h4>Brother Adalric</h4>
+              <span class="modal-npc-role">Village Priest — Temple of Kord</span>
+              <p class="modal-npc-desc">Burdened priest holding Sir Besrand's sealed covenant. Deeply troubled by weeping temple relics.</p>
+              <button class="btn-modal-action">Converse with Adalric</button>
+            </div>
+          </div>
+          <div class="modal-npc-card" data-npc="voss" data-loc="Midnight Manor">
+            <img src="/static/images/voss_ref.png" class="modal-npc-avatar" alt="Voss">
+            <div class="modal-npc-details">
+              <h4>Lord Voss Kestrian</h4>
+              <span class="modal-npc-role">“Lord” of Midnight Manor — Lake Island</span>
+              <p class="modal-npc-desc">Aristocratic newcomer secretly excavating a tunnel beneath the lake toward the crossroads well.</p>
+              <button class="btn-modal-action">Converse with Voss</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Quests & Progress -->
+  <div id="modal-quests" class="rpg-modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d4a359" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          <h3>Quests & Campaign Progression</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modal-quests" title="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="quest-detail-banner">
+          <div class="quest-detail-tag">MAIN CAMPAIGN</div>
+          <h4>The Last Light of Duskendale</h4>
+          <p>Beneath the crossroads well at the heart of Duskendale lies a sealed vault — something old that drained the magic out of the village overnight decades ago. Sir Besrand the Last sealed it with stone and iron. He is dead now, and someone has forged a key.</p>
+        </div>
+
+        <h4 class="modal-section-heading">Story Objectives & Leads</h4>
+        <ul class="quest-objective-checklist">
+          <li class="quest-obj-item done">
+            <span class="obj-check">&#10003;</span>
+            <div class="obj-text-col">
+              <strong>Arrive in Duskendale</strong>
+              <span>Enter the village crossroads near the ancient well.</span>
+            </div>
+          </li>
+          <li class="quest-obj-item active">
+            <span class="obj-check">&#9678;</span>
+            <div class="obj-text-col">
+              <strong>Investigate the Twin Anomalies</strong>
+              <span>Question Fenn at Fang Rock Forge about fractured steel and Sarini at the Potion Shoppe about failing wards.</span>
+            </div>
+          </li>
+          <li class="quest-obj-item">
+            <span class="obj-check">&#9675;</span>
+            <div class="obj-text-col">
+              <strong>Trace the Peddler's Midnight Cargo</strong>
+              <span>Interrogate Merowin on the Eastern Road regarding the heavy excavation crates transported to Midnight Manor.</span>
+            </div>
+          </li>
+          <li class="quest-obj-item">
+            <span class="obj-check">&#9675;</span>
+            <div class="obj-text-col">
+              <strong>Inspect Sir Besrand's Covenant</strong>
+              <span>Consult Brother Adalric at the Temple of Kord to understand the 3 sacred conditions of the vault seal.</span>
+            </div>
+          </li>
+          <li class="quest-obj-item">
+            <span class="obj-check">&#9675;</span>
+            <div class="obj-text-col">
+              <strong>Confront Lord Voss at Midnight Manor</strong>
+              <span>Cross the lake bridge to inspect the cellar tunnel and negotiate or expose Voss's excavation.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Inventory & Rewards -->
+  <div id="modal-inventory" class="rpg-modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d4a359" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <h3>Inventory & Relics</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modal-inventory" title="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="inventory-grid">
+          <div class="inv-card">
+            <div class="inv-icon-frame gold-ring">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e5b869" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18"/></svg>
+            </div>
+            <div class="inv-info">
+              <h4>Emberflint Circlet</h4>
+              <span class="inv-type">Wondrous Item — Attuned</span>
+              <p>A thin iron circlet pulled from the sealed vault generations ago. Grants Advantage on Insight checks to detect deception and perceive hidden motives.</p>
+            </div>
+          </div>
+
+          <div class="inv-card">
+            <div class="inv-icon-frame gold-ring">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e5b869" stroke-width="2"><circle cx="12" cy="12" r="9"/><text x="12" y="16" text-anchor="middle" fill="#e5b869" font-size="11" font-weight="bold">G</text></svg>
+            </div>
+            <div class="inv-info">
+              <h4>200 Gold Pieces (gp)</h4>
+              <span class="inv-type">Currency</span>
+              <p>Old Dusken coinage minted during the reign of the High Marshals. Accepted across the realm and valued by peddlers and blacksmiths alike.</p>
+            </div>
+          </div>
+
+          <div class="inv-card">
+            <div class="inv-icon-frame gold-ring">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#e5b869" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"/></svg>
+            </div>
+            <div class="inv-info">
+              <h4>Temple of Kord Favor</h4>
+              <span class="inv-type">Divine Boon — 1 Use Remaining</span>
+              <p>A standing pledge from Brother Adalric and the order. Grants one free divine intervention: high-tier blessing, shelter, or complete bodily restoration.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Campaign Notes -->
+  <div id="modal-notes" class="rpg-modal" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-window">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#d4a359" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          <h3>Journal & Campaign Notes</h3>
+        </div>
+        <button class="modal-close-btn" data-close="modal-notes" title="Close modal">&times;</button>
+      </div>
+      <div class="modal-body notes-body">
+        <article class="note-entry">
+          <span class="note-date">Sir Besrand's Covenant (Fragment 14)</span>
+          <h4>The Three Locks of the Well</h4>
+          <p>“Let no pick or chisel taste the mortar of the well cistern. For what rests within does not sleep; it thirsts. Three bounds hold it: the cold iron forged in stillness, the wards woven in root and jasmine, and the silence of the temple choir.”</p>
+        </article>
+        <article class="note-entry">
+          <span class="note-date">Alchemical Observation — Sarini</span>
+          <h4>The Bitter Earth</h4>
+          <p>“The night-blooming jasmine withered before daybreak. Not drought, not frost — the ley line running beneath the well has inverted, drawing spiritual energy downward into the rock.”</p>
+        </article>
+        <article class="note-entry">
+          <span class="note-date">Blacksmith's Log — Fenn</span>
+          <h4>Cold Fractures</h4>
+          <p>“Ten broadswords and four iron plows split down the center line with no hammer blow. The ground vibration matches the resonant chime of an excavation drill.”</p>
+        </article>
+      </div>
     </div>
   </div>
 

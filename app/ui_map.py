@@ -17,7 +17,7 @@ AVATAR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "stat
 MAP_WIDTH = 1290
 MAP_HEIGHT = 846
 
-DEFAULT_PLAYER_POS = (550, 460)  # The Crossroads Well
+DEFAULT_PLAYER_POS = (630, 510)  # The Crossroads Well
 PROXIMITY_THRESHOLD = 110
 
 # In-memory caches for high-speed map generation (< 20ms)
@@ -177,30 +177,26 @@ def render_game_map(player_pos: Tuple[int, int]) -> Image.Image:
     # ==================== Player Marker ====================
     px, py = player_pos
 
-    # If at default well position on ref art, the well already has the concentric green glow!
-    # If the player moved away from the well, draw the active player token:
-    dist_from_well = math.hypot(px - DEFAULT_PLAYER_POS[0], py - DEFAULT_PLAYER_POS[1])
-    if not is_ref_art or dist_from_well > 30:
-        PLAYER_R = 18 if is_ref_art else 30
+    PLAYER_R = 18 if is_ref_art else 30
 
-        # Multi-ring emerald glow
-        draw.ellipse([px - PLAYER_R - 6, py - PLAYER_R - 6, px + PLAYER_R + 6, py + PLAYER_R + 6],
-                     outline="#22c55e", width=3)
-        draw.ellipse([px - PLAYER_R, py - PLAYER_R, px + PLAYER_R, py + PLAYER_R],
-                     fill=(16, 185, 129, 230), outline="#ffffff", width=2)
-        draw.ellipse([px - 5, py - 5, px + 5, py + 5], fill="#ffffff")
+    # Multi-ring emerald glow
+    draw.ellipse([px - PLAYER_R - 6, py - PLAYER_R - 6, px + PLAYER_R + 6, py + PLAYER_R + 6],
+                 outline="#22c55e", width=3)
+    draw.ellipse([px - PLAYER_R, py - PLAYER_R, px + PLAYER_R, py + PLAYER_R],
+                 fill=(16, 185, 129, 230), outline="#ffffff", width=2)
+    draw.ellipse([px - 5, py - 5, px + 5, py + 5], fill="#ffffff")
 
-        # Player label badge
-        p_label = "YOU"
-        p_bbox = draw.textbbox((0, 0), p_label, font=font_badge)
-        ptw = p_bbox[2] - p_bbox[0]
-        pth = p_bbox[3] - p_bbox[1]
-        b_x1 = px - ptw // 2 - 8
-        b_x2 = px + ptw // 2 + 8
-        b_y1 = py - PLAYER_R - pth - 8
-        b_y2 = b_y1 + pth + 6
+    # Player label badge
+    p_label = "YOU"
+    p_bbox = draw.textbbox((0, 0), p_label, font=font_badge)
+    ptw = p_bbox[2] - p_bbox[0]
+    pth = p_bbox[3] - p_bbox[1]
+    b_x1 = px - ptw // 2 - 8
+    b_x2 = px + ptw // 2 + 8
+    b_y1 = py - PLAYER_R - pth - 8
+    b_y2 = b_y1 + pth + 6
 
-        draw.rounded_rectangle([b_x1, b_y1, b_x2, b_y2], radius=6, fill=(16, 185, 129, 240), outline="#ffffff", width=1)
-        draw.text((b_x1 + 8, b_y1 + 3), p_label, fill="#ffffff", font=font_badge)
+    draw.rounded_rectangle([b_x1, b_y1, b_x2, b_y2], radius=6, fill=(16, 185, 129, 240), outline="#ffffff", width=1)
+    draw.text((b_x1 + 8, b_y1 + 3), p_label, fill="#ffffff", font=font_badge)
 
     return img

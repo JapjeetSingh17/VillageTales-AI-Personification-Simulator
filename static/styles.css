@@ -1227,12 +1227,19 @@ html, body {
   overflow: hidden;
   flex-shrink: 0;
   background: #0c101c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
 }
 
 .npc-thumb {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  display: block;
 }
 
 .npc-card-name {
@@ -1361,6 +1368,479 @@ html, body {
   font-family: var(--font-serif);
   font-size: 12.5px;
   color: var(--gold-bright);
+}
+
+/* ==================== STORY LEADS CARD ==================== */
+.story-leads-card {
+  background: #0f1524;
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.story-lead-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.story-lead-tag {
+  font-size: 9.5px;
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.story-lead-counter {
+  font-size: 10px;
+  color: var(--gold-primary);
+  font-weight: 600;
+}
+
+.story-lead-text {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.story-lead-quick-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.btn-lead-teleport {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  color: var(--gold-bright);
+  background: #162035;
+  border: 1px solid var(--border-gold);
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-lead-teleport:hover {
+  background: #223252;
+  border-color: #ffd885;
+}
+
+/* ==================== TOPIC CHIPS ==================== */
+.topic-chips-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 4px 2px 2px;
+}
+
+.topic-chips-label {
+  font-size: 10.5px;
+  color: var(--gold-primary);
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.topic-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.topic-chip {
+  font-size: 11px;
+  color: #94a3b8;
+  background: #111a2d;
+  border: 1px solid #23324d;
+  border-radius: 12px;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.topic-chip:hover {
+  color: #f1f5f9;
+  background: #1c2a47;
+  border-color: var(--gold-primary);
+  transform: translateY(-1px);
+}
+
+/* ==================== THEMATIC MODALS ==================== */
+.rpg-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+
+.rpg-modal.active {
+  display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 6, 12, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.modal-window {
+  position: relative;
+  z-index: 10;
+  width: 90%;
+  max-width: 600px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: #0d121f;
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 163, 89, 0.15);
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-panel);
+  background: #101728;
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-title h3 {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  color: var(--gold-bright);
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  transition: color 0.15s;
+}
+
+.modal-close-btn:hover {
+  color: #f1f5f9;
+}
+
+.modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  color: #cbd5e1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.modal-intro {
+  margin-top: 0;
+  margin-bottom: 14px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* Modal NPC Directory */
+.modal-npc-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-npc-card {
+  display: flex;
+  gap: 14px;
+  background: #12192a;
+  border: 1px solid var(--border-panel);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  align-items: center;
+  transition: border-color 0.15s;
+}
+
+.modal-npc-card:hover {
+  border-color: var(--border-gold);
+}
+
+.modal-npc-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-primary);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #0a0d16;
+}
+
+.modal-npc-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-npc-details h4 {
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  color: #f1f5f9;
+  margin: 0 0 2px;
+}
+
+.modal-npc-role {
+  display: block;
+  font-size: 11px;
+  color: var(--gold-primary);
+  margin-bottom: 4px;
+}
+
+.modal-npc-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0 0 8px;
+  line-height: 1.35;
+}
+
+.btn-modal-action {
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  color: #0c101c;
+  background: var(--gold-primary);
+  border: 1px solid #ffd885;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-modal-action:hover {
+  background: #e5b869;
+}
+
+/* Modal Quests */
+.quest-detail-banner {
+  background: #141c30;
+  border-left: 3px solid var(--gold-primary);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom: 16px;
+}
+
+.quest-detail-tag {
+  font-size: 9px;
+  font-family: var(--font-heading);
+  letter-spacing: 1px;
+  color: var(--gold-primary);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.quest-detail-banner h4 {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  color: #f1f5f9;
+  margin: 0 0 6px;
+}
+
+.quest-detail-banner p {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.modal-section-heading {
+  font-family: var(--font-heading);
+  font-size: 12.5px;
+  color: var(--gold-bright);
+  letter-spacing: 0.5px;
+  margin: 14px 0 10px;
+  border-bottom: 1px solid var(--border-panel);
+  padding-bottom: 4px;
+}
+
+.quest-objective-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quest-obj-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #111726;
+  border: 1px solid #1c263c;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.quest-obj-item.done {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.quest-obj-item.done .obj-check {
+  color: #10b981;
+}
+
+.quest-obj-item.active {
+  border-color: var(--border-gold);
+  background: rgba(212, 163, 89, 0.08);
+}
+
+.quest-obj-item.active .obj-check {
+  color: var(--gold-bright);
+}
+
+.obj-check {
+  font-size: 13px;
+  font-weight: bold;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.obj-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.obj-text-col strong {
+  font-size: 12px;
+  color: #f1f5f9;
+}
+
+.obj-text-col span {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* Modal Inventory */
+.inventory-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inv-card {
+  display: flex;
+  gap: 14px;
+  background: #111726;
+  border: 1px solid var(--border-panel);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  align-items: center;
+}
+
+.inv-icon-frame {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-primary);
+  background: #0a0d16;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.inv-info h4 {
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  color: var(--gold-bright);
+  margin: 0 0 2px;
+}
+
+.inv-type {
+  font-size: 10.5px;
+  color: #10b981;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.inv-info p {
+  margin: 0;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+/* Modal Notes */
+.notes-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.note-entry {
+  background: #111726;
+  border-left: 3px solid var(--gold-primary);
+  border-top: 1px solid #1c263c;
+  border-right: 1px solid #1c263c;
+  border-bottom: 1px solid #1c263c;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 14px;
+}
+
+.note-date {
+  font-size: 9.5px;
+  font-family: var(--font-heading);
+  letter-spacing: 0.5px;
+  color: var(--gold-primary);
+  text-transform: uppercase;
+}
+
+.note-entry h4 {
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  color: #f1f5f9;
+  margin: 4px 0 6px;
+}
+
+.note-entry p {
+  margin: 0;
+  font-size: 11.5px;
+  color: #cbd5e1;
+  line-height: 1.45;
+  font-style: italic;
 }
 
 /* ==================== RESPONSIVENESS ==================== */

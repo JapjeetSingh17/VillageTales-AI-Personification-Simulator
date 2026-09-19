@@ -57,9 +57,77 @@
     },
   };
 
+  // ==================== NPC SUGGESTED TOPICS & CLUES ====================
+  const NPC_TOPICS = {
+    sarini: [
+      "Why are your protective wards failing?",
+      "What is draining the village's magic?",
+      "What did Sir Besrand seal beneath the well?",
+    ],
+    fenn: [
+      "Why did the forged steel crack overnight?",
+      "Did you notice anything unusual at the well cover?",
+      "Tell me about the old mining tunnels.",
+    ],
+    merowin: [
+      "Who hired you for the midnight deliveries?",
+      "What was inside those heavy crates?",
+      "What strange sounds come from the well at midnight?",
+    ],
+    adalric: [
+      "Why are the holy temple symbols weeping dark oil?",
+      "What are the three conditions of Sir Besrand's covenant?",
+      "What is waking beneath the crossroads?",
+    ],
+    voss: [
+      "What are you excavating beneath the lake?",
+      "What do you believe is inside the crossroads vault?",
+      "Are you willing to gamble the whole village?",
+    ],
+  };
+
+  // ==================== ADVANCED SPEECH PROFILES ====================
+  const NPC_SPEECH_PROFILES = {
+    sarini: {
+      pitch: 1.08,
+      rate: 0.94,
+      volume: 1.0,
+      voiceNames: ["Samantha", "Victoria", "Karen", "Serena", "Moira", "Tessa", "Female"],
+      genderFallback: "female",
+    },
+    voss: {
+      pitch: 0.92,
+      rate: 0.90,
+      volume: 1.0,
+      voiceNames: ["Daniel", "Oliver", "Arthur", "George", "David", "Alex", "Male"],
+      genderFallback: "male",
+    },
+    fenn: {
+      pitch: 0.74,
+      rate: 0.86,
+      volume: 1.0,
+      voiceNames: ["Gordon", "Thomas", "Alex", "Fred", "Ralph", "Daniel", "Male"],
+      genderFallback: "male",
+    },
+    adalric: {
+      pitch: 0.82,
+      rate: 0.82,
+      volume: 1.0,
+      voiceNames: ["Daniel", "Arthur", "Alex", "Oliver", "Fred", "David", "Male"],
+      genderFallback: "male",
+    },
+    merowin: {
+      pitch: 1.05,
+      rate: 1.05,
+      volume: 1.0,
+      voiceNames: ["Tom", "Rishi", "Alex", "Junior", "Oliver", "Daniel", "Male"],
+      genderFallback: "male",
+    },
+  };
+
   // ==================== STATE ====================
   const state = {
-    playerPos: [550, 460],
+    playerPos: [630, 510],
     activeNpc: NPC_INFO.sarini,
     npcRoster: {},
     conversations: {
@@ -77,6 +145,7 @@
     timerInterval: null,
     missionPollInterval: null,
     mapZoom: 1.0,
+    cachedVoices: [],
   };
 
   // ==================== DOM REFS ====================
@@ -113,13 +182,19 @@
       loadingOverlay: $("#loading-overlay"),
       loadingText: $("#loading-text"),
       missionTracker: $("#mission-tracker"),
+      topicChips: $("#topic-chips"),
+      storyLeadText: $("#story-lead-text"),
+      leadStageLabel: $("#lead-stage-label"),
     };
   }
 
   // ==================== INITIALIZATION ====================
   document.addEventListener("DOMContentLoaded", () => {
     cacheDom();
+    cacheSpeechVoices();
     loadNpcRoster();
+    bindNavRail();
+    bindModals();
     bindMovement();
     bindTeleport();
     bindMapControls();
@@ -131,6 +206,7 @@
     // Set initial display to Sarini
     updateNpcBanner();
     loadChatHistory();
+    renderTopicChips("sarini");
 
     // Load initial map
     updateMap();
@@ -160,6 +236,8 @@
     updateNpcBanner();
     loadChatHistory();
     syncRosterUi(npcId);
+    renderTopicChips(npcId);
+    updateStoryLeadForNpc(npcId);
   }
 
   function syncRosterUi(npcId) {
@@ -274,9 +352,13 @@
       if (data.active_npc) {
         state.activeNpc = data.active_npc;
         syncRosterUi(data.active_npc.id);
+        renderTopicChips(data.active_npc.id);
+        updateStoryLeadForNpc(data.active_npc.id);
       } else if (targetNpcId && NPC_INFO[targetNpcId]) {
         state.activeNpc = NPC_INFO[targetNpcId];
         syncRosterUi(targetNpcId);
+        renderTopicChips(targetNpcId);
+        updateStoryLeadForNpc(targetNpcId);
       }
 
       updateMap();
@@ -306,6 +388,8 @@
       if (data.active_npc) {
         state.activeNpc = data.active_npc;
         syncRosterUi(data.active_npc.id);
+        renderTopicChips(data.active_npc.id);
+        updateStoryLeadForNpc(data.active_npc.id);
       }
 
       updateMap();
@@ -322,6 +406,145 @@
     });
   }
 
+  function bindNavRail() {
+    $$(".nav-item").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        const navTarget = btn.dataset.nav;
+
+        $$(".nav-item").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        if (navTarget === "home") {
+          state.mapZoom = 1.0;
+          if (els.mapImg) els.mapImg.style.transform = "scale(1.0)";
+          teleportTo("Crossroads Well", "sarini");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else if (navTarget === "map") {
+          const mapPanel = $(".map-panel");
+          if (mapPanel) {
+            mapPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+            mapPanel.style.borderColor = "var(--gold-bright)";
+            setTimeout(() => {
+              mapPanel.style.borderColor = "";
+            }, 1200);
+          }
+        } else if (navTarget === "npcs") {
+          openModal("modal-npcs");
+        } else if (navTarget === "quests") {
+          openModal("modal-quests");
+        } else if (navTarget === "inventory") {
+          openModal("modal-inventory");
+        } else if (navTarget === "notes") {
+          openModal("modal-notes");
+        }
+      });
+    });
+  }
+
+  function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.add("active");
+    modal.setAttribute("aria-hidden", "false");
+  }
+
+  function closeModal(modal) {
+    if (!modal) return;
+    modal.classList.remove("active");
+    modal.setAttribute("aria-hidden", "true");
+  }
+
+  function bindModals() {
+    // Close button in header
+    $$(".modal-close-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const modal = btn.closest(".rpg-modal");
+        closeModal(modal);
+      });
+    });
+
+    // Backdrop click
+    $$(".modal-backdrop").forEach((bd) => {
+      bd.addEventListener("click", () => {
+        const modal = bd.closest(".rpg-modal");
+        closeModal(modal);
+      });
+    });
+
+    // Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        $$(".rpg-modal.active").forEach((m) => closeModal(m));
+      }
+    });
+
+    // Modal NPC cards: click to converse
+    $$(".modal-npc-card").forEach((card) => {
+      card.addEventListener("click", () => {
+        const npcId = card.dataset.npc;
+        const loc = card.dataset.loc;
+        if (npcId) {
+          setActiveNpcById(npcId);
+          teleportTo(loc || "Crossroads Well", npcId);
+          closeModal(card.closest(".rpg-modal"));
+        }
+      });
+    });
+  }
+
+  function renderTopicChips(npcId) {
+    if (!els.topicChips) return;
+    els.topicChips.innerHTML = "";
+
+    const topics = NPC_TOPICS[npcId] || NPC_TOPICS.sarini;
+    topics.forEach((topic) => {
+      const chip = document.createElement("button");
+      chip.className = "topic-chip";
+      chip.textContent = topic;
+      chip.addEventListener("click", () => {
+        if (els.textInput) {
+          els.textInput.value = topic;
+          sendTextMessage();
+        }
+      });
+      els.topicChips.appendChild(chip);
+    });
+  }
+
+  function updateStoryLeadForNpc(npcId) {
+    if (!els.storyLeadText) return;
+
+    const leads = {
+      sarini: {
+        stage: "Step 1 of 5",
+        text: "Sarini's protective wards around Duskendale are losing potency overnight. Ask her what is draining the spiritual ley lines and what Sir Besrand sealed beneath the crossroads well.",
+      },
+      fenn: {
+        stage: "Step 2 of 5",
+        text: "Every piece of forged steel at Fang Rock Forge cracked with no hammer blow. Ask Fenn about the underground resonant vibrations and the chipped well masonry he repaired.",
+      },
+      merowin: {
+        stage: "Step 3 of 5",
+        text: "Merowin was paid triple coin to haul heavy excavation crates under cover of darkness. Interrogate him about who commissioned the delivery and the sounds from the well.",
+      },
+      adalric: {
+        stage: "Step 4 of 5",
+        text: "The sacred relics in the Temple of Kord weep dark oil. Ask Brother Adalric about Sir Besrand's sealed covenant and the three sacred conditions that prevent the vault breach.",
+      },
+      voss: {
+        stage: "Step 5 of 5",
+        text: "Lord Voss has been digging an underwater tunnel from Midnight Manor toward the crossroads well. Confront him on his excavation and choose whether to negotiate, expose him, or seal the door.",
+      },
+    };
+
+    const lead = leads[npcId] || leads.sarini;
+    els.storyLeadText.textContent = lead.text;
+    if (els.leadStageLabel) {
+      els.leadStageLabel.textContent = lead.stage;
+    }
+  }
+
   function bindTeleport() {
     // Quick location access buttons
     $$(".btn-quick-loc").forEach((btn) => {
@@ -333,6 +556,16 @@
       btn.addEventListener("click", () => {
         const loc = btn.dataset.location;
         const npc = btn.dataset.npc;
+        teleportTo(loc, npc);
+      });
+    });
+
+    // Story leads quick action buttons
+    $$(".btn-lead-teleport").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const loc = btn.dataset.loc;
+        const npc = btn.dataset.npc;
+        if (npc) setActiveNpcById(npc);
         teleportTo(loc, npc);
       });
     });
@@ -460,6 +693,49 @@
   }
 
   // ==================== NPC VOICE SYNTHESIS & PLAYBACK ====================
+  function cacheSpeechVoices() {
+    if (!("speechSynthesis" in window)) return;
+    state.cachedVoices = window.speechSynthesis.getVoices() || [];
+    window.speechSynthesis.onvoiceschanged = () => {
+      state.cachedVoices = window.speechSynthesis.getVoices() || [];
+    };
+  }
+
+  function findBestVoice(profile) {
+    const voices = (state.cachedVoices && state.cachedVoices.length)
+      ? state.cachedVoices
+      : (window.speechSynthesis.getVoices() || []);
+    if (!voices.length) return null;
+
+    // 1. Match specific named voices in preference order
+    for (const name of profile.voiceNames) {
+      const match = voices.find((v) => v.lang && v.lang.startsWith("en") && v.name.toLowerCase().includes(name.toLowerCase()));
+      if (match) return match;
+    }
+
+    // 2. Gender / characteristic fallback
+    if (profile.genderFallback === "female") {
+      const match = voices.find((v) => v.lang && v.lang.startsWith("en") && (
+        v.name.toLowerCase().includes("female") ||
+        v.name.toLowerCase().includes("woman") ||
+        v.name.toLowerCase().includes("samantha") ||
+        v.name.toLowerCase().includes("victoria")
+      ));
+      if (match) return match;
+    } else if (profile.genderFallback === "male") {
+      const match = voices.find((v) => v.lang && v.lang.startsWith("en") && (
+        v.name.toLowerCase().includes("male") ||
+        v.name.toLowerCase().includes("man") ||
+        v.name.toLowerCase().includes("daniel") ||
+        v.name.toLowerCase().includes("alex")
+      ));
+      if (match) return match;
+    }
+
+    // 3. Any English voice
+    return voices.find((v) => v.lang && v.lang.startsWith("en")) || voices[0];
+  }
+
   function speakWithWebSpeech(npc, text) {
     if (!("speechSynthesis" in window) || !text) return;
 
@@ -469,29 +745,15 @@
       if (!clean) return;
 
       const utterance = new SpeechSynthesisUtterance(clean);
-      const voices = window.speechSynthesis.getVoices() || [];
       const npcId = npc ? npc.id : "sarini";
+      const profile = NPC_SPEECH_PROFILES[npcId] || NPC_SPEECH_PROFILES.sarini;
 
-      if (npcId === "sarini") {
-        utterance.pitch = 1.15;
-        utterance.rate = 0.95;
-        const v = voices.find((v) => v.lang && v.lang.startsWith("en") && (v.name.includes("Female") || v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira")));
-        if (v) utterance.voice = v;
-      } else if (npcId === "voss") {
-        utterance.pitch = 0.75;
-        utterance.rate = 0.9;
-        const v = voices.find((v) => v.lang && v.lang.startsWith("en") && (v.name.includes("Male") || v.name.includes("Daniel") || v.name.includes("Alex") || v.name.includes("David")));
-        if (v) utterance.voice = v;
-      } else if (npcId === "merowin") {
-        utterance.pitch = 0.95;
-        utterance.rate = 1.05;
-      } else if (npcId === "adalric") {
-        utterance.pitch = 0.82;
-        utterance.rate = 0.9;
-      } else {
-        utterance.pitch = 0.8;
-        utterance.rate = 0.95;
-      }
+      const voice = findBestVoice(profile);
+      if (voice) utterance.voice = voice;
+
+      utterance.pitch = profile.pitch;
+      utterance.rate = profile.rate;
+      utterance.volume = profile.volume || 1.0;
 
       window.speechSynthesis.speak(utterance);
     } catch (e) {
