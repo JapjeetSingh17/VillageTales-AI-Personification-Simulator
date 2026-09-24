@@ -1,7 +1,8 @@
 # Village Tales: AI Personification Simulator
+A tale's of multiple different AI agents that has been prompted to follow a particular story, each has their own backstory and character vibe, Find what happened in the village years ago and why village is in danger.
 
 ## Map
-![Duskendale Map](static/map.jpg)
+![Duskendale Map](game_map.png)
 
 ## Story Overview
 Decades ago, Sir Besrand the Last sealed an ancient vault beneath the crossroads well after an unknown entity drained the magic from Duskendale overnight. Sir Besrand forbade anyone from forging a key to that vault, but decades later, the mysterious newcomer Voss Kestrian has purchased Midnight Manor and covertly begun tunneling beneath the lake into the vault. As subterranean corruption leaks into the water table, blacksmith Fenn notices his finest steel rusting overnight and alchemist Sarini discovers her protective wards failing, prompting the player to investigate the villagers' warnings, uncover Voss's tunnel, and decide the fate of Duskendale.
