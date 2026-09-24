@@ -43,6 +43,7 @@ project link: https://village-tales.vercel.app/
 ## Architecture and Pipeline
 - Engineered a stateful dialogue graph utilizing LangChain and LangGraph to maintain character persona consistency, memory grounding, and voice synthesis across conversation turns.
 - Integrated Google Gemini 3.6 Flash with Gemini STT and Gemini 3.1 Flash TTS Preview to deliver low-latency speech-to-speech dialogue tailored to individual character voice profiles.
+- To optimise the project further, I have used OpenAI's Whisper large-V3-Turbo model for Speech-To-Text and gemini 3.1 Flash for Text-To-Speech.
 
 ## Retrieval-Augmented Memory (RAG)
 - Implemented a vector memory system using ChromaDB and Gemini embeddings to ground character responses in canonical Duskendale lore and recall past player dialogue.
